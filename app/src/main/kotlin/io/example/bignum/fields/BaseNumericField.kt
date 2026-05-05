@@ -44,7 +44,6 @@ abstract class BaseNumericField(
     ) {
         val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         val views = RemoteViews(context.packageName, R.layout.numeric_field)
-        FieldRenderer.applyConfig(views, config)
 
         val needsProfile = zoneKind != null || formatNeedsProfile()
         val dataFlow = karoo.streamDataFlow(upstreamTypeId)
@@ -54,7 +53,7 @@ abstract class BaseNumericField(
             combine(dataFlow, profileFlow) { state, profile ->
                 compute(state, profile, config.preview)
             }.collect { (text, unit, color) ->
-                FieldRenderer.fill(views, text, unit, color)
+                FieldRenderer.render(context, views, config, text, unit, color)
                 emitter.updateView(views)
             }
         }
