@@ -1,0 +1,16 @@
+[versions]
+agp = "8.5.2"
+kotlin = "2.0.20"
+coroutines = "1.8.1"
+karooExt = "1.1.2"
+junit = "4.13.2"
+
+[libraries]
+karoo-ext = { group = "com.github.hammerheadnav", name = "karoo-ext", version.ref = "karooExt" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
