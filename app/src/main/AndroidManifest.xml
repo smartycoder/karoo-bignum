@@ -7,6 +7,16 @@
         android:icon="@drawable/ic_bignum"
         android:allowBackup="false">
 
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".BigNumExtension"
             android:exported="true"

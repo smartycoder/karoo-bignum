@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">BigNum</string>
     <string name="extension_name">BigNum</string>
+    <string name="activity_hint">Add BigNum data fields from\nSettings → Profile → Data Pages.</string>
 
     <string name="df_speed">Speed</string>
     <string name="df_speed_desc">Speed in big bold Oswald.</string>
