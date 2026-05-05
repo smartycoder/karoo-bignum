@@ -9,22 +9,20 @@ import android.widget.RemoteViews
 import io.example.bignum.R
 import io.hammerhead.karooext.models.ViewConfig
 
-// Renders the field's text to a Bitmap using the bundled Oswald Bold typeface and
-// pushes it into the RemoteViews via setImageViewBitmap. Sidesteps the unreliable
-// cross-process loading of font resources by RemoteViews TextViews.
+// Renders the field's primary number to a Bitmap using the bundled Oswald Bold
+// typeface and pushes it into the RemoteViews via setImageViewBitmap. The unit
+// suffix (km/h, W, ...) is intentionally not drawn.
 object FieldRenderer {
 
-    private const val UNIT_COLOR = 0xFFAAAAAA.toInt()
-    private const val UNIT_RATIO = 0.30f
-    private const val GAP_PX = 12f
-    private const val MAX_HEIGHT_FRACTION = 0.85f
+    private const val RIGHT_PADDING_PX = 8f
+    private const val HEIGHT_SAFETY = 0.98f
 
     fun render(
         context: Context,
         views: RemoteViews,
         config: ViewConfig,
         primary: String,
-        unit: String,
+        @Suppress("UNUSED_PARAMETER") unit: String,
         primaryColor: Int,
     ) {
         val w = config.viewSize.first
@@ -36,49 +34,31 @@ object FieldRenderer {
         val typeface = runCatching { context.resources.getFont(R.font.oswald_bold) }
             .getOrDefault(Typeface.DEFAULT_BOLD)
 
-        val primaryPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             this.typeface = typeface
             color = primaryColor
             isSubpixelText = true
         }
-        val unitPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            this.typeface = typeface
-            color = UNIT_COLOR
-            isSubpixelText = true
+
+        // Maximum textSize that fits the available height.
+        paint.textSize = 100f
+        val ratio = paint.fontMetrics.let { (it.descent - it.ascent) / 100f }
+        var size = (h.toFloat() / ratio) * HEIGHT_SAFETY
+        paint.textSize = size
+
+        // Shrink to fit width.
+        while (size > 12f) {
+            if (paint.measureText(primary) <= w - RIGHT_PADDING_PX) break
+            size *= 0.95f
+            paint.textSize = size
         }
 
-        var primarySize = h * MAX_HEIGHT_FRACTION
-        primaryPaint.textSize = primarySize
-        unitPaint.textSize = primarySize * UNIT_RATIO
+        val fm = paint.fontMetrics
+        val baseline = (h - (fm.descent - fm.ascent)) / 2f - fm.ascent
+        val textWidth = paint.measureText(primary)
+        val startX = w - RIGHT_PADDING_PX - textWidth
 
-        while (primarySize > 12f) {
-            val totalWidth = primaryPaint.measureText(primary) +
-                if (unit.isEmpty()) 0f else unitPaint.measureText(unit) + GAP_PX
-            if (totalWidth <= w.toFloat()) break
-            primarySize *= 0.95f
-            primaryPaint.textSize = primarySize
-            unitPaint.textSize = primarySize * UNIT_RATIO
-        }
-
-        val pFm = primaryPaint.fontMetrics
-        val pTextHeight = pFm.descent - pFm.ascent
-        val baseline = (h - pTextHeight) / 2f - pFm.ascent
-
-        val pWidth = primaryPaint.measureText(primary)
-        val uWidth = if (unit.isEmpty()) 0f else unitPaint.measureText(unit) + GAP_PX
-        val totalW = pWidth + uWidth
-
-        val startX: Float = when (config.alignment) {
-            ViewConfig.Alignment.LEFT -> 0f
-            ViewConfig.Alignment.CENTER -> (w - totalW) / 2f
-            ViewConfig.Alignment.RIGHT -> w - totalW
-        }
-
-        canvas.drawText(primary, startX, baseline, primaryPaint)
-        if (unit.isNotEmpty()) {
-            canvas.drawText(unit, startX + pWidth + GAP_PX, baseline, unitPaint)
-        }
-
+        canvas.drawText(primary, startX, baseline, paint)
         views.setImageViewBitmap(R.id.bitmap, bitmap)
     }
 }
