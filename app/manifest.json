@@ -1,0 +1,12 @@
+{
+  "label": "BigNum",
+  "packageName": "io.example.bignum",
+  "iconUrl": "https://example.com/bignum.png",
+  "latestApkUrl": "https://example.com/bignum.apk",
+  "latestVersion": "1.0",
+  "latestVersionCode": 1,
+  "developer": "<your name>",
+  "description": "Large, bold numeric data fields with optional zone coloring.",
+  "releaseNotes": "Initial release.",
+  "tags": ["datafield", "numeric"]
+}

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BigNum</string>
+    <string name="extension_name">BigNum</string>
+
+    <string name="df_speed">Speed</string>
+    <string name="df_speed_desc">Speed in big bold Oswald.</string>
+    <string name="df_hr">Heart Rate</string>
+    <string name="df_hr_desc">Heart rate, zone-colored.</string>
+    <string name="df_power">Power</string>
+    <string name="df_power_desc">Power, zone-colored.</string>
+    <string name="df_cadence">Cadence</string>
+    <string name="df_cadence_desc">Cadence in rpm.</string>
+    <string name="df_distance">Distance</string>
+    <string name="df_distance_desc">Ride distance.</string>
+    <string name="df_elapsed">Elapsed Time</string>
+    <string name="df_elapsed_desc">Elapsed time h:mm:ss.</string>
+    <string name="df_pwr_3s">Power 3s avg</string>
+    <string name="df_pwr_3s_desc">3-second smoothed power, zone-colored.</string>
+    <string name="df_pwr_10s">Power 10s avg</string>
+    <string name="df_pwr_10s_desc">10-second smoothed power, zone-colored.</string>
+    <string name="df_pwr_30s">Power 30s avg</string>
+    <string name="df_pwr_30s_desc">30-second smoothed power, zone-colored.</string>
+    <string name="df_avg_hr">HR avg</string>
+    <string name="df_avg_hr_desc">Average heart rate, zone-colored.</string>
+    <string name="df_elevation">Elevation</string>
+    <string name="df_elevation_desc">Elevation gain.</string>
+    <string name="df_grade">Grade</string>
+    <string name="df_grade_desc">Current grade %.</string>
+    <string name="df_temp">Temperature</string>
+    <string name="df_temp_desc">Ambient temperature.</string>
+    <string name="df_lap_power">Power (lap avg)</string>
+    <string name="df_lap_power_desc">Lap average power, zone-colored.</string>
+</resources>

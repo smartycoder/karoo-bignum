@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ExtensionInfo
+    displayName="@string/extension_name"
+    icon="@drawable/ic_bignum"
+    id="bignum"
+    scansDevices="false">
+    <DataType displayName="@string/df_speed"     graphical="true" icon="@drawable/ic_bignum" typeId="speed"       description="@string/df_speed_desc"/>
+    <DataType displayName="@string/df_hr"        graphical="true" icon="@drawable/ic_bignum" typeId="hr"          description="@string/df_hr_desc"/>
+    <DataType displayName="@string/df_power"     graphical="true" icon="@drawable/ic_bignum" typeId="power"       description="@string/df_power_desc"/>
+    <DataType displayName="@string/df_cadence"   graphical="true" icon="@drawable/ic_bignum" typeId="cadence"     description="@string/df_cadence_desc"/>
+    <DataType displayName="@string/df_distance"  graphical="true" icon="@drawable/ic_bignum" typeId="distance"    description="@string/df_distance_desc"/>
+    <DataType displayName="@string/df_elapsed"   graphical="true" icon="@drawable/ic_bignum" typeId="elapsed"     description="@string/df_elapsed_desc"/>
+    <DataType displayName="@string/df_pwr_3s"    graphical="true" icon="@drawable/ic_bignum" typeId="avgPower3s"  description="@string/df_pwr_3s_desc"/>
+    <DataType displayName="@string/df_pwr_10s"   graphical="true" icon="@drawable/ic_bignum" typeId="avgPower10s" description="@string/df_pwr_10s_desc"/>
+    <DataType displayName="@string/df_pwr_30s"   graphical="true" icon="@drawable/ic_bignum" typeId="avgPower30s" description="@string/df_pwr_30s_desc"/>
+    <DataType displayName="@string/df_avg_hr"    graphical="true" icon="@drawable/ic_bignum" typeId="avgHr"       description="@string/df_avg_hr_desc"/>
+    <DataType displayName="@string/df_elevation" graphical="true" icon="@drawable/ic_bignum" typeId="elevation"   description="@string/df_elevation_desc"/>
+    <DataType displayName="@string/df_grade"     graphical="true" icon="@drawable/ic_bignum" typeId="grade"       description="@string/df_grade_desc"/>
+    <DataType displayName="@string/df_temp"      graphical="true" icon="@drawable/ic_bignum" typeId="temp"        description="@string/df_temp_desc"/>
+    <DataType displayName="@string/df_lap_power" graphical="true" icon="@drawable/ic_bignum" typeId="lapPower"    description="@string/df_lap_power_desc"/>
+</ExtensionInfo>
