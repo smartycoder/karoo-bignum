@@ -33,6 +33,8 @@ abstract class BaseNumericField(
     abstract val zoneKind: ZoneKind?
     abstract val format: (Double, PreferredUnit?) -> Pair<String, String>
     open val previewValue: Double = 0.0
+    /** When true, render as the formatter's output for 0.0 instead of "--" while no value is available. */
+    open val zeroWhenMissing: Boolean = false
     protected open fun formatNeedsProfile(): Boolean = false
 
     final override fun startView(
@@ -69,7 +71,14 @@ abstract class BaseNumericField(
             state is StreamState.Streaming -> state.dataPoint.singleValue
             else -> null
         }
-        if (raw == null) return Triple("--", "", ZoneColors.DEFAULT_TEXT)
+        if (raw == null) {
+            return if (zeroWhenMissing) {
+                val (text, unit) = format(0.0, profile?.preferredUnit)
+                Triple(text, unit, ZoneColors.DEFAULT_TEXT)
+            } else {
+                Triple("--", "", ZoneColors.DEFAULT_TEXT)
+            }
+        }
         val (text, unit) = format(raw, profile?.preferredUnit)
         val color = zoneKind?.let { ZoneColors.color(it, raw, profile) } ?: ZoneColors.DEFAULT_TEXT
         return Triple(text, unit, color)

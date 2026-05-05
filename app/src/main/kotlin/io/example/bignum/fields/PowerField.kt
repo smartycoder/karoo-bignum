@@ -11,4 +11,5 @@ class PowerField(extension: String, karoo: KarooSystemService)
     override val zoneKind = ZoneKind.POWER
     override val format = Formatters.watts
     override val previewValue = 237.0
+    override val zeroWhenMissing = true
 }

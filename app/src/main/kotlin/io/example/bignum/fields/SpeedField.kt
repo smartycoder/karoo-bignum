@@ -10,5 +10,6 @@ class SpeedField(extension: String, karoo: KarooSystemService)
     override val zoneKind = null
     override val format = Formatters.speed
     override val previewValue = 10.0
+    override val zeroWhenMissing = true
     override fun formatNeedsProfile() = true
 }
