@@ -1,19 +1,48 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
 }
 
+// Release signing. The keystore and its passwords live outside the repository; see
+// keystore.properties.template. Without that file the release build is simply left unsigned,
+// so cloning the repo and running assembleRelease still works.
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) keystorePropertiesFile.inputStream().use { load(it) }
+}
+
 android {
-    namespace = "io.example.bignum"
+    namespace = "io.smartycoder.bignum"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "io.example.bignum"
+        applicationId = "io.smartycoder.bignum"
         minSdk = 29
         targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        if (keystorePropertiesFile.exists()) {
+            create("release") {
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            // Null when keystore.properties is absent, which leaves the APK unsigned rather
+            // than failing the build.
+            signingConfig = signingConfigs.findByName("release")
+        }
     }
 
     buildFeatures {

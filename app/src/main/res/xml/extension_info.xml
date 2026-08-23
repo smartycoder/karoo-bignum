@@ -4,18 +4,43 @@
     icon="@drawable/ic_bignum"
     id="bignum"
     scansDevices="false">
-    <DataType displayName="@string/df_speed"     graphical="true" icon="@drawable/ic_bignum" typeId="speed"       description="@string/df_speed_desc"/>
-    <DataType displayName="@string/df_hr"        graphical="true" icon="@drawable/ic_bignum" typeId="hr"          description="@string/df_hr_desc"/>
-    <DataType displayName="@string/df_power"     graphical="true" icon="@drawable/ic_bignum" typeId="power"       description="@string/df_power_desc"/>
-    <DataType displayName="@string/df_cadence"   graphical="true" icon="@drawable/ic_bignum" typeId="cadence"     description="@string/df_cadence_desc"/>
-    <DataType displayName="@string/df_distance"  graphical="true" icon="@drawable/ic_bignum" typeId="distance"    description="@string/df_distance_desc"/>
-    <DataType displayName="@string/df_elapsed"   graphical="true" icon="@drawable/ic_bignum" typeId="elapsed"     description="@string/df_elapsed_desc"/>
-    <DataType displayName="@string/df_pwr_3s"    graphical="true" icon="@drawable/ic_bignum" typeId="avgPower3s"  description="@string/df_pwr_3s_desc"/>
-    <DataType displayName="@string/df_pwr_10s"   graphical="true" icon="@drawable/ic_bignum" typeId="avgPower10s" description="@string/df_pwr_10s_desc"/>
-    <DataType displayName="@string/df_pwr_30s"   graphical="true" icon="@drawable/ic_bignum" typeId="avgPower30s" description="@string/df_pwr_30s_desc"/>
-    <DataType displayName="@string/df_avg_hr"    graphical="true" icon="@drawable/ic_bignum" typeId="avgHr"       description="@string/df_avg_hr_desc"/>
-    <DataType displayName="@string/df_elevation" graphical="true" icon="@drawable/ic_bignum" typeId="elevation"   description="@string/df_elevation_desc"/>
-    <DataType displayName="@string/df_grade"     graphical="true" icon="@drawable/ic_bignum" typeId="grade"       description="@string/df_grade_desc"/>
-    <DataType displayName="@string/df_temp"      graphical="true" icon="@drawable/ic_bignum" typeId="temp"        description="@string/df_temp_desc"/>
-    <DataType displayName="@string/df_lap_power" graphical="true" icon="@drawable/ic_bignum" typeId="lapPower"    description="@string/df_lap_power_desc"/>
+    <DataType displayName="@string/df_speed"     graphical="true" icon="@drawable/ic_speed" typeId="speed"       description="@string/df_speed_desc"/>
+    <DataType displayName="@string/df_avg_speed" graphical="true" icon="@drawable/ic_speed" typeId="avgSpeed" description="@string/df_avg_speed_desc"/>
+    <DataType displayName="@string/df_max_speed" graphical="true" icon="@drawable/ic_speed" typeId="maxSpeed" description="@string/df_max_speed_desc"/>
+    <DataType displayName="@string/df_distance"  graphical="true" icon="@drawable/ic_distance" typeId="distance"    description="@string/df_distance_desc"/>
+    <DataType displayName="@string/df_hr"        graphical="true" icon="@drawable/ic_heart" typeId="hr"          description="@string/df_hr_desc"/>
+    <DataType displayName="@string/df_hr_zone" graphical="true" icon="@drawable/ic_heart" typeId="hrZone" description="@string/df_hr_zone_desc"/>
+    <DataType displayName="@string/df_avg_hr"    graphical="true" icon="@drawable/ic_heart" typeId="avgHr"       description="@string/df_avg_hr_desc"/>
+    <DataType displayName="@string/df_max_hr" graphical="true" icon="@drawable/ic_heart" typeId="maxHr" description="@string/df_max_hr_desc"/>
+    <DataType displayName="@string/df_pct_max_hr" graphical="true" icon="@drawable/ic_heart" typeId="percentMaxHr" description="@string/df_pct_max_hr_desc"/>
+    <DataType displayName="@string/df_pct_hrr" graphical="true" icon="@drawable/ic_heart" typeId="percentHrr" description="@string/df_pct_hrr_desc"/>
+    <DataType displayName="@string/df_avg_pct_hrr" graphical="true" icon="@drawable/ic_heart" typeId="avgPercentHrr" description="@string/df_avg_pct_hrr_desc"/>
+    <DataType displayName="@string/df_cadence"   graphical="true" icon="@drawable/ic_cadence" typeId="cadence"     description="@string/df_cadence_desc"/>
+    <DataType displayName="@string/df_avg_cadence" graphical="true" icon="@drawable/ic_cadence" typeId="avgCadence" description="@string/df_avg_cadence_desc"/>
+    <DataType displayName="@string/df_max_cadence" graphical="true" icon="@drawable/ic_cadence" typeId="maxCadence" description="@string/df_max_cadence_desc"/>
+    <DataType displayName="@string/df_power" graphical="true" icon="@drawable/ic_bolt" typeId="power" description="@string/df_power_desc"/>
+    <DataType displayName="@string/df_power_zone" graphical="true" icon="@drawable/ic_bolt" typeId="powerZone" description="@string/df_power_zone_desc"/>
+    <DataType displayName="@string/df_power_3s" graphical="true" icon="@drawable/ic_bolt" typeId="power3s" description="@string/df_power_3s_desc"/>
+    <DataType displayName="@string/df_power_5s" graphical="true" icon="@drawable/ic_bolt" typeId="power5s" description="@string/df_power_5s_desc"/>
+    <DataType displayName="@string/df_power_10s" graphical="true" icon="@drawable/ic_bolt" typeId="power10s" description="@string/df_power_10s_desc"/>
+    <DataType displayName="@string/df_power_30s" graphical="true" icon="@drawable/ic_bolt" typeId="power30s" description="@string/df_power_30s_desc"/>
+    <DataType displayName="@string/df_power_20m" graphical="true" icon="@drawable/ic_bolt" typeId="power20m" description="@string/df_power_20m_desc"/>
+    <DataType displayName="@string/df_power_1hr" graphical="true" icon="@drawable/ic_bolt" typeId="power1hr" description="@string/df_power_1hr_desc"/>
+    <DataType displayName="@string/df_avg_power" graphical="true" icon="@drawable/ic_bolt" typeId="avgPower" description="@string/df_avg_power_desc"/>
+    <DataType displayName="@string/df_max_power" graphical="true" icon="@drawable/ic_bolt" typeId="maxPower" description="@string/df_max_power_desc"/>
+    <DataType displayName="@string/df_np" graphical="true" icon="@drawable/ic_bolt" typeId="np" description="@string/df_np_desc"/>
+    <DataType displayName="@string/df_lap_power" graphical="true" icon="@drawable/ic_bolt" typeId="lapPower" description="@string/df_lap_power_desc"/>
+    <DataType displayName="@string/df_w_kg"      graphical="true" icon="@drawable/ic_bolt" typeId="powerToWeight" description="@string/df_w_kg_desc"/>
+    <DataType displayName="@string/df_tss" graphical="true" icon="@drawable/ic_bolt" typeId="tss" description="@string/df_tss_desc"/>
+    <DataType displayName="@string/df_calories" graphical="true" icon="@drawable/ic_bolt" typeId="calories" description="@string/df_calories_desc"/>
+    <DataType displayName="@string/df_altitude" graphical="true" icon="@drawable/ic_elevation" typeId="altitude" description="@string/df_altitude_desc"/>
+    <DataType displayName="@string/df_elevation" graphical="true" icon="@drawable/ic_elevation" typeId="elevation"   description="@string/df_elevation_desc"/>
+    <DataType displayName="@string/df_descent" graphical="true" icon="@drawable/ic_elevation" typeId="descent" description="@string/df_descent_desc"/>
+    <DataType displayName="@string/df_grade"     graphical="true" icon="@drawable/ic_grade" typeId="grade"       description="@string/df_grade_desc"/>
+    <DataType displayName="@string/df_vam" graphical="true" icon="@drawable/ic_elevation" typeId="vam" description="@string/df_vam_desc"/>
+    <DataType displayName="@string/df_avg_vam" graphical="true" icon="@drawable/ic_elevation" typeId="avgVam" description="@string/df_avg_vam_desc"/>
+    <DataType displayName="@string/df_dist_to_top" graphical="true" icon="@drawable/ic_distance" typeId="distanceToTop" description="@string/df_dist_to_top_desc"/>
+    <DataType displayName="@string/df_elev_to_top" graphical="true" icon="@drawable/ic_elevation" typeId="elevationToTop" description="@string/df_elev_to_top_desc"/>
+    <DataType displayName="@string/df_elapsed"   graphical="true" icon="@drawable/ic_clock" typeId="elapsed"     description="@string/df_elapsed_desc"/>
+    <DataType displayName="@string/df_temp"      graphical="true" icon="@drawable/ic_temp" typeId="temp"        description="@string/df_temp_desc"/>
 </ExtensionInfo>

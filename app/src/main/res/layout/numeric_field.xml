@@ -1,12 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  The header bitmap is sized to its own content and drawn unscaled (scaleType="center" on a
+  wrap_content view), so the layout positions it rather than the bitmap padding itself out to
+  the reported view width, because that width is unreliable on the Karoo (see FieldRenderer).
+  The number below is scaled to fill what is left. Both come in three copies, one per
+  alignment, because RemoteViews cannot set scaleType or layout_gravity at runtime
+  (neither setter is @RemotableViewMethod) but can toggle visibility.
+-->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ImageView android:id="@+id/bitmap"
+    <ImageView android:id="@+id/bitmap_start"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitStart"
+        android:visibility="gone"
+        android:contentDescription="@null"/>
+
+    <ImageView android:id="@+id/bitmap_center"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="fitCenter"
-        android:adjustViewBounds="true"
+        android:visibility="gone"
         android:contentDescription="@null"/>
+
+    <ImageView android:id="@+id/bitmap_end"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitEnd"
+        android:contentDescription="@null"/>
+
+    <ImageView android:id="@+id/header_start"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:scaleType="center"
+        android:visibility="gone"
+        android:contentDescription="@null"/>
+
+    <ImageView android:id="@+id/header_center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:scaleType="center"
+        android:visibility="gone"
+        android:contentDescription="@null"/>
+
+    <ImageView android:id="@+id/header_end"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:scaleType="center"
+        android:visibility="gone"
+        android:contentDescription="@null"/>
+
 </FrameLayout>

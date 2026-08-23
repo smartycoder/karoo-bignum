@@ -1,12 +1,12 @@
 {
   "label": "BigNum",
-  "packageName": "io.example.bignum",
-  "iconUrl": "https://example.com/bignum.png",
-  "latestApkUrl": "https://example.com/bignum.apk",
-  "latestVersion": "1.0",
+  "packageName": "io.smartycoder.bignum",
+  "iconUrl": "https://github.com/smartycoder/karoo-bignum/raw/main/docs/icon.png",
+  "latestApkUrl": "https://github.com/smartycoder/karoo-bignum/releases/latest/download/app-release.apk",
+  "latestVersion": "1.0.0",
   "latestVersionCode": 1,
-  "developer": "<your name>",
-  "description": "Large, bold numeric data fields with optional zone coloring.",
+  "developer": "smartycoder",
+  "description": "Large, bold numeric data fields with optional HR and power zone coloring.",
   "releaseNotes": "Initial release.",
   "tags": ["datafield", "numeric"]
 }

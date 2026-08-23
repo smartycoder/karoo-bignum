@@ -12,3 +12,5 @@
 *.aab
 *.keystore
 .kotlin
+*.jks
+keystore.properties

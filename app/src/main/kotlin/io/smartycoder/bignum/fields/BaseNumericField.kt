@@ -1,0 +1,147 @@
+package io.smartycoder.bignum.fields
+
+import android.content.Context
+import android.widget.RemoteViews
+import io.smartycoder.bignum.R
+import io.smartycoder.bignum.Settings
+import io.smartycoder.bignum.ZoneColorMode
+import io.smartycoder.bignum.consumerFlow
+import io.smartycoder.bignum.render.FieldRenderer
+import io.smartycoder.bignum.render.Theme
+import io.smartycoder.bignum.render.ZoneColors
+import io.smartycoder.bignum.render.ZoneKind
+import io.smartycoder.bignum.streamDataFlow
+import io.hammerhead.karooext.KarooSystemService
+import io.hammerhead.karooext.extension.DataTypeImpl
+import io.hammerhead.karooext.internal.ViewEmitter
+import io.hammerhead.karooext.models.StreamState
+import io.hammerhead.karooext.models.UpdateGraphicConfig
+import io.hammerhead.karooext.models.UserProfile
+import io.hammerhead.karooext.models.UserProfile.PreferredUnit
+import io.hammerhead.karooext.models.ViewConfig
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
+
+abstract class BaseNumericField(
+    extension: String,
+    typeId: String,
+    private val karoo: KarooSystemService,
+) : DataTypeImpl(extension, typeId) {
+
+    abstract val upstreamTypeId: String
+
+    /** Short header text, drawn by us -- Karoo's own header shows the uppercased displayName. */
+    abstract val label: String
+
+    /** Header icon, drawn by us and tinted; see [io.smartycoder.bignum.render.FieldRenderer]. */
+    abstract val iconRes: Int
+
+    /**
+     * Widest value this field renders at full size. Text size is derived from it rather than
+     * from the current value, so the number does not resize as digits come and go; anything
+     * wider still shrinks to fit.
+     */
+    open val widthTemplate: String = FieldRenderer.DEFAULT_WIDTH_TEMPLATE
+    abstract val zoneKind: ZoneKind?
+    abstract val format: (Double, PreferredUnit?) -> Pair<String, String>
+    open val previewValue: Double = 0.0
+    /** Rendered through [format] instead of "--" while no value is available. */
+    open val missingValue: Double? = null
+    protected open fun formatNeedsProfile(): Boolean = false
+
+    /**
+     * Splits formatted text into the part drawn at full size and a trailing part drawn
+     * smaller and raised, the way a Wahoo shows the seconds of a ride time. Default: no
+     * split.
+     *
+     * The same rule is applied to [widthTemplate], so the scale a field renders at follows
+     * from one definition instead of a second template kept in step by hand.
+     */
+    open fun split(text: String): Pair<String, String> = text to ""
+
+    final override fun startView(
+        context: Context,
+        config: ViewConfig,
+        emitter: ViewEmitter,
+    ) {
+        val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+        // We draw the icon and label ourselves, so Karoo's header would only duplicate them
+        // and eat the top of the tile.
+        emitter.onNext(UpdateGraphicConfig(showHeader = false))
+
+        val needsProfile = zoneKind != null || formatNeedsProfile()
+        val dataFlow = karoo.streamDataFlow(upstreamTypeId)
+        val profileFlow = if (needsProfile) karoo.consumerFlow<UserProfile>() else flowOf<UserProfile?>(null)
+
+        scope.launch {
+            combine(
+                dataFlow,
+                profileFlow,
+                Settings.zoneColorModeFlow(context),
+                Settings.testModeFlow(context),
+            ) { state, profile, mode, testMode ->
+                compute(state, profile, config.preview, testMode, mode, Theme.textColor(context))
+            }.collect { visual ->
+                // A fresh RemoteViews per update, never a reused one: RemoteViews is an
+                // append-only list of actions with no way to clear it, so reusing the instance
+                // would retain every bitmap ever set and re-serialize the whole growing list on
+                // each send -- ending in FAILED BINDER TRANSACTION or OOM after a long ride.
+                val views = RemoteViews(context.packageName, R.layout.numeric_field)
+                val (primary, secondary) = split(visual.text)
+                val (tPrimary, tSecondary) = split(widthTemplate)
+                FieldRenderer.render(
+                    context, views, config, label, iconRes,
+                    tPrimary, tSecondary, primary, secondary, visual.color, visual.background,
+                )
+                emitter.updateView(views)
+            }
+        }
+        emitter.setCancellable { scope.cancel() }
+    }
+
+    /**
+     * What one update puts on screen. [background] is null unless the field is filled with its
+     * zone colour, in which case [color] is the contrasting ink for that fill.
+     */
+    private data class Visual(val text: String, val color: Int, val background: Int?)
+
+    private fun compute(
+        state: StreamState,
+        profile: UserProfile?,
+        preview: Boolean,
+        testMode: Boolean,
+        mode: ZoneColorMode,
+        defaultColor: Int,
+    ): Visual {
+        val raw: Double? = when {
+            // Ahead of the stream, unlike preview: with a Karoo sitting idle a live 0 and a
+            // demo 0 look the same, so test mode has to win even while data is arriving.
+            // Page editing keeps deferring to real data when there is any.
+            testMode -> previewValue
+            preview && state !is StreamState.Streaming -> previewValue
+            state is StreamState.Streaming -> state.dataPoint.singleValue
+            else -> null
+        }
+        if (raw == null) {
+            // No zone applies to a missing value, so no fill either -- an empty field should not
+            // sit there in a colour that says something about data it does not have.
+            val fallback = missingValue ?: return Visual("--", defaultColor, null)
+            return Visual(format(fallback, profile?.preferredUnit).first, defaultColor, null)
+        }
+        val text = format(raw, profile?.preferredUnit).first
+        val zone = zoneKind
+            ?.takeIf { mode != ZoneColorMode.OFF }
+            ?.let { ZoneColors.color(it, raw, profile) }
+            ?: return Visual(text, defaultColor, null)
+        return when (mode) {
+            ZoneColorMode.FILL -> Visual(text, ZoneColors.onColor(zone), zone)
+            else -> Visual(text, zone, null)
+        }
+    }
+}
