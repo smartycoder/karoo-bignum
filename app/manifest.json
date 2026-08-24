@@ -7,6 +7,9 @@
   "latestVersionCode": 1,
   "developer": "smartycoder",
   "description": "Large, bold numeric data fields with optional HR and power zone coloring.",
-  "releaseNotes": "Initial release.",
-  "tags": ["datafield", "numeric"]
+  "releaseNotes": "First release. 39 data fields in Oswald Bold, sized to fill the field. Heart rate and power can be colored by zone: off, color the number, or fill the whole field. Elapsed time keeps the seconds small so the hours and minutes stay large.",
+  "tags": [
+    "datafield",
+    "numeric"
+  ]
 }
