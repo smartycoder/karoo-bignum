@@ -129,8 +129,9 @@ holding the key.
 
 ## Support
 
-BigNum is free and open source. If it earns its place on your bars,
-[buy me a coffee](https://buymeacoffee.com/smartycoder).
+BigNum is free and open source. If it earns its place on your bars:
+
+[<img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy me a coffee" height="41">](https://buymeacoffee.com/smartycoder)
 
 ## Licenses
 
