@@ -127,6 +127,11 @@ produces a signed `app/build/outputs/apk/release/app-release.apk`. Without `keys
 the same command still works but leaves the APK unsigned, so anyone can build the project without
 holding the key.
 
+## Support
+
+BigNum is free and open source. If it earns its place on your bars,
+[buy me a coffee](https://buymeacoffee.com/smartycoder).
+
 ## Licenses
 
 Apache-2.0 — see [LICENSE](LICENSE).
