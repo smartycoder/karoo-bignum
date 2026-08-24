@@ -8,6 +8,20 @@ Karoo shows in its own update flow.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-08-24
+
+### Added
+
+- **Power - W/kg 3s** and **Power - W/kg 5s**. karoo-ext has no smoothed power-to-weight type, so
+  these divide the smoothed power stream by the rider weight from the Karoo profile. Without a
+  usable weight the field shows `--` rather than raw watts labelled as W/kg.
+
+### Fixed
+
+- A field's fallback value is now rendered through the same conversion as a live one, so a derived
+  field cannot print watts where it promises W/kg.
+- A non-finite rider weight no longer reaches the screen as `NaN`.
+
 ## [1.0.0] - 2026-08-24
 
 First public release.
@@ -40,5 +54,6 @@ First public release.
 - The rounded card behind each field is drawn by Karoo. On a ride page it does not clip the
   extension's view to that card, so the fill rounds its own corners to match.
 
-[Unreleased]: https://github.com/smartycoder/karoo-bignum/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/smartycoder/karoo-bignum/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.0.1
 [1.0.0]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.0.0

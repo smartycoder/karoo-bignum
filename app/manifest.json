@@ -3,11 +3,11 @@
   "packageName": "io.smartycoder.bignum",
   "iconUrl": "https://github.com/smartycoder/karoo-bignum/raw/main/docs/icon.png",
   "latestApkUrl": "https://github.com/smartycoder/karoo-bignum/releases/latest/download/app-release.apk",
-  "latestVersion": "1.0.0",
-  "latestVersionCode": 1,
+  "latestVersion": "1.0.1",
+  "latestVersionCode": 2,
   "developer": "smartycoder",
   "description": "Large, bold numeric data fields with optional HR and power zone coloring.",
-  "releaseNotes": "First release. 39 data fields in Oswald Bold, sized to fill the field. Heart rate and power can be colored by zone: off, color the number, or fill the whole field. Elapsed time keeps the seconds small so the hours and minutes stay large.",
+  "releaseNotes": "Adds W/kg 3s and W/kg 5s, derived from smoothed power and the rider weight from your Karoo profile.",
   "tags": [
     "datafield",
     "numeric"
