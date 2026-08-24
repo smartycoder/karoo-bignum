@@ -1,7 +1,7 @@
 # karoo-bignum
 
 Large, bold numeric data fields for the Hammerhead Karoo, rendered in **Oswald Bold** so the
-number fills the field instead of floating in the middle of it. 39 fields covering speed, heart
+number fills the field instead of floating in the middle of it. 41 fields covering speed, heart
 rate, power, cadence, climbing and time, with optional heart-rate and power zone coloring driven
 by your Karoo `UserProfile`.
 
@@ -31,7 +31,7 @@ All fields appear in the field picker under **BigNum**.
 
 **Power** — Power · Power - Zone · Power - 3s · Power - 5s · Power - 10s · Power - 30s ·
 Power - 20m · Power - 1hr · Power - Avg · Power - Max · Power - Normalized · Power - Lap Avg ·
-Power - W/kg · Power - TSS · Power - Calories
+Power - W/kg · Power - W/kg 3s · Power - W/kg 5s · Power - TSS · Power - Calories
 
 **Climbing** — Climb - Elevation · Climb - Ascent · Climb - Descent · Climb - Grade ·
 Climb - VAM · Climb - VAM Avg · Climb - Dist to Top · Climb - Elev to Top
@@ -40,6 +40,10 @@ Climb - VAM · Climb - VAM Avg · Climb - Dist to Top · Climb - Elev to Top
 
 Speed, distance, elevation and temperature follow the metric/imperial preference from your Karoo
 profile. Power-to-weight and TSS use the rider weight and FTP from the same profile.
+
+The Karoo reports plain W/kg itself, but has no smoothed equivalent, so **W/kg 3s** and
+**W/kg 5s** are worked out here: smoothed power divided by the rider weight in your profile.
+Without a weight to divide by they show `--` rather than a number that would really be watts.
 
 ### Elapsed time
 
