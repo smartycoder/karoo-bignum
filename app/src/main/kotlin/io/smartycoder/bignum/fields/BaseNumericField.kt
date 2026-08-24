@@ -64,6 +64,12 @@ abstract class BaseNumericField(
      */
     open fun split(text: String): Pair<String, String> = text to ""
 
+    /**
+     * The value rendered, when it differs from the value the stream carries. Null means there is
+     * nothing to show -- a field deriving W/kg from watts has no answer without a rider weight.
+     */
+    open fun displayValue(raw: Double, profile: UserProfile?): Double? = raw
+
     final override fun startView(
         context: Context,
         config: ViewConfig,
@@ -130,13 +136,19 @@ abstract class BaseNumericField(
         }
         if (raw == null) {
             // No zone applies to a missing value, so no fill either -- an empty field should not
-            // sit there in a colour that says something about data it does not have.
-            val fallback = missingValue ?: return Visual("--", defaultColor, null)
+            // sit there in a colour that says something about data it does not have. The fallback
+            // still goes through displayValue: a field deriving W/kg from watts must not print it
+            // as raw watts just because this path is shorter.
+            val fallback = missingValue?.let { displayValue(it, profile) }
+                ?: return Visual("--", defaultColor, null)
             return Visual(format(fallback, profile?.preferredUnit).first, defaultColor, null)
         }
-        val text = format(raw, profile?.preferredUnit).first
+        val display = displayValue(raw, profile) ?: return Visual("--", defaultColor, null)
+        val text = format(display, profile?.preferredUnit).first
         val zone = zoneKind
             ?.takeIf { mode != ZoneColorMode.OFF }
+            // raw, not display: zones are defined on the value the stream carries. A field that
+            // shows W/kg derived from watts still has its zone decided by those watts.
             ?.let { ZoneColors.color(it, raw, profile) }
             ?: return Visual(text, defaultColor, null)
         return when (mode) {

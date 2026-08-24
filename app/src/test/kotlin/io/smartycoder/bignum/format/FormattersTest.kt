@@ -4,6 +4,7 @@ import io.hammerhead.karooext.models.UserProfile
 import io.hammerhead.karooext.models.UserProfile.PreferredUnit
 import io.hammerhead.karooext.models.UserProfile.PreferredUnit.UnitType
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class FormattersTest {
@@ -128,5 +129,40 @@ class FormattersTest {
         assertEquals("-9.5", Formatters.percent(-9.5, null).first)
         assertEquals("-12", Formatters.percent(-12.5, null).first)
         assertEquals("8.4", Formatters.percent(8.4, null).first)
+    }
+
+    // W/kg 3s and 5s have no karoo-ext type of their own, so they divide smoothed watts by the
+    // rider weight. What has to hold: the arithmetic, and that a missing weight yields nothing to
+    // show rather than raw watts dressed up as W/kg.
+
+    @Test
+    fun `watts per kilogram divides by rider weight`() {
+        assertEquals(3.5, Formatters.perKilogram(245.0, 70f)!!, 0.0001)
+        assertEquals(4.0, Formatters.perKilogram(240.0, 60f)!!, 0.0001)
+    }
+
+    @Test
+    fun `without a usable weight there is nothing to show`() {
+        assertNull(Formatters.perKilogram(245.0, null))
+        assertNull(Formatters.perKilogram(245.0, 0f))
+        assertNull(Formatters.perKilogram(245.0, -70f))
+    }
+
+    @Test
+    fun `the derived value renders through the same formatter as the plain field`() {
+        val perKg = Formatters.perKilogram(241.0, 70f)!!
+        assertEquals("3.4", Formatters.wattsPerKg(perKg, null).first)
+    }
+
+    @Test
+    fun `a non-finite weight yields nothing rather than NaN on screen`() {
+        // NaN <= 0f is false, so a bare range check would let this through and render "NaN".
+        assertNull(Formatters.perKilogram(245.0, Float.NaN))
+        assertNull(Formatters.perKilogram(245.0, Float.POSITIVE_INFINITY))
+    }
+
+    @Test
+    fun `zero watts is a real reading, not a missing one`() {
+        assertEquals(0.0, Formatters.perKilogram(0.0, 70f)!!, 0.0001)
     }
 }

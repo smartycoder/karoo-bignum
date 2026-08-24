@@ -22,6 +22,15 @@ object Formatters {
     val wattsPerKg: (Double, PreferredUnit?) -> Pair<String, String> =
         { v, _ -> "%.1f".fmt(v) to "W/kg" }
 
+    /**
+     * Watts per kilogram of rider weight, or null when there is no usable weight. Null rather
+     * than the raw watts: a field showing 250 where it promises W/kg is worse than showing "--".
+     */
+    fun perKilogram(watts: Double, weightKg: Float?): Double? =
+        // isFinite before the comparison: NaN <= 0f is false, so a NaN weight would slip past a
+        // bare range check and put "NaN" on the rider's screen.
+        if (weightKg == null || !weightKg.isFinite() || weightKg <= 0f) null else watts / weightKg
+
     val count: (Double, PreferredUnit?) -> Pair<String, String> =
         { v, _ -> "${v.toInt()}" to "" }
 

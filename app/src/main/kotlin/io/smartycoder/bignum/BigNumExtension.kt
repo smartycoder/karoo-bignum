@@ -10,6 +10,7 @@ import io.smartycoder.bignum.fields.GradeField
 import io.smartycoder.bignum.fields.HeartRateField
 import io.smartycoder.bignum.fields.PowerField
 import io.smartycoder.bignum.fields.PowerToWeightField
+import io.smartycoder.bignum.fields.SmoothedPowerToWeightField
 import io.smartycoder.bignum.R
 import io.smartycoder.bignum.fields.SimpleField
 import io.smartycoder.bignum.format.Formatters
@@ -64,6 +65,9 @@ class BigNumExtension : KarooExtension("bignum", BuildConfig.VERSION_NAME) {
             PowerField(extension, "np", karoo, DataType.Type.NORMALIZED_POWER, "NP", previewValue = 231.0),
             PowerField(extension, "lapPower", karoo, DataType.Type.POWER_LAP, "PWR lap", previewValue = 226.0),
             PowerToWeightField(extension, karoo),
+            // previewValue is in watts; at the demo profile's 70 kg these render 3.4 and 3.5.
+            SmoothedPowerToWeightField(extension, "powerToWeight3s", karoo, DataType.Type.SMOOTHED_3S_AVERAGE_POWER, "W/KG 3s", previewValue = 241.0),
+            SmoothedPowerToWeightField(extension, "powerToWeight5s", karoo, DataType.Type.SMOOTHED_5S_AVERAGE_POWER, "W/KG 5s", previewValue = 244.0),
             TssField(extension, karoo),
             CaloriesField(extension, karoo),
             SimpleField(extension, "hrZone", karoo, DataType.Type.HR_ZONE, "HR Z", R.drawable.ic_heart, Formatters.count, previewValue = 3.0),

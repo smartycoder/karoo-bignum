@@ -37,11 +37,24 @@ Append at the end of the `## Other extensions` section:
 
 ## Before submitting
 
-- [ ] Repo is public at `github.com/smartycoder/karoo-bignum`
-- [ ] A release exists with `app-release.apk` attached (the README install links point at
-      `releases/latest`)
-- [ ] `manifest.json` is attached to the same release — `MANIFEST_URL` in `AndroidManifest.xml`
-      points at `releases/latest/download/manifest.json`, and the Karoo "Update" action reads it
-- [ ] `docs/icon.png` exists — `manifest.json` `iconUrl` points at it (the app icon is currently a
-      vector drawable, so a PNG has to be exported)
+All verified 2026-08-24:
+
+- [x] Repo is public at `github.com/smartycoder/karoo-bignum`
+- [x] Release `v1.0.0` has `app-release.apk` attached; `releases/latest/download/app-release.apk`
+      returns 302
+- [x] `manifest.json` attached to the same release; `releases/latest/download/manifest.json`
+      returns 302, which is where `MANIFEST_URL` points
+- [x] `docs/icon.png` exists and the `iconUrl` in the published manifest resolves
 - [x] Screenshots in `docs/screenshots/` are up to date (real device, all three zone modes)
+
+## How to submit
+
+Per the list's own Contributing section:
+
+1. Fork `timklge/awesome-karoo`.
+2. Branch, e.g. `feature/bignum`.
+3. Add the Table of Contents line and the entry above, both at the end of their sections.
+4. Commit, push, open a pull request.
+
+The last entry under **Other extensions** is currently `karoo-hass-companion`, so BigNum goes
+after it.

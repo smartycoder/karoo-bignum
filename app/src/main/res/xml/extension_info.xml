@@ -31,6 +31,8 @@
     <DataType displayName="@string/df_np" graphical="true" icon="@drawable/ic_bolt" typeId="np" description="@string/df_np_desc"/>
     <DataType displayName="@string/df_lap_power" graphical="true" icon="@drawable/ic_bolt" typeId="lapPower" description="@string/df_lap_power_desc"/>
     <DataType displayName="@string/df_w_kg"      graphical="true" icon="@drawable/ic_bolt" typeId="powerToWeight" description="@string/df_w_kg_desc"/>
+    <DataType displayName="@string/df_w_kg_3s" graphical="true" icon="@drawable/ic_bolt" typeId="powerToWeight3s" description="@string/df_w_kg_3s_desc"/>
+    <DataType displayName="@string/df_w_kg_5s" graphical="true" icon="@drawable/ic_bolt" typeId="powerToWeight5s" description="@string/df_w_kg_5s_desc"/>
     <DataType displayName="@string/df_tss" graphical="true" icon="@drawable/ic_bolt" typeId="tss" description="@string/df_tss_desc"/>
     <DataType displayName="@string/df_calories" graphical="true" icon="@drawable/ic_bolt" typeId="calories" description="@string/df_calories_desc"/>
     <DataType displayName="@string/df_altitude" graphical="true" icon="@drawable/ic_elevation" typeId="altitude" description="@string/df_altitude_desc"/>

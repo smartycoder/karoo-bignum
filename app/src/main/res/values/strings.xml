@@ -24,6 +24,10 @@
     <string name="df_temp_desc">Ambient temperature.</string>
     <string name="df_w_kg">Power - W/kg</string>
     <string name="df_w_kg_desc">Power to weight in W/kg.</string>
+    <string name="df_w_kg_3s">Power - W/kg 3s</string>
+    <string name="df_w_kg_3s_desc">3-second smoothed power to weight in W/kg.</string>
+    <string name="df_w_kg_5s">Power - W/kg 5s</string>
+    <string name="df_w_kg_5s_desc">5-second smoothed power to weight in W/kg.</string>
     <string name="df_power">Power</string>
     <string name="df_power_desc">Current power, zone-colored.</string>
     <string name="df_power_3s">Power - 3s</string>
