@@ -3,11 +3,11 @@
   "packageName": "io.smartycoder.bignum",
   "iconUrl": "https://github.com/smartycoder/karoo-bignum/raw/main/docs/icon.png",
   "latestApkUrl": "https://github.com/smartycoder/karoo-bignum/releases/latest/download/app-release.apk",
-  "latestVersion": "1.0.1",
-  "latestVersionCode": 2,
+  "latestVersion": "1.1.0",
+  "latestVersionCode": 3,
   "developer": "smartycoder",
   "description": "Large, bold numeric data fields with optional HR and power zone coloring.",
-  "releaseNotes": "Adds W/kg 3s and W/kg 5s, derived from smoothed power and the rider weight from your Karoo profile.",
+  "releaseNotes": "Numbers now use Saira, with equal-width digits and an adjustable width and weight, so values stop shifting sideways and most fields fit a taller number. Oswald is still available. Climb - Grade draws the slope as a coloured wedge behind the number.",
   "tags": [
     "datafield",
     "numeric"

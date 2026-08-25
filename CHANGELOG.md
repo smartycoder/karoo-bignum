@@ -8,6 +8,37 @@ Karoo shows in its own update flow.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-08-25
+
+### Added
+
+- **Font setting.** Numbers are now set in **Saira** by default, with a **Width** (50-124%) and
+  **Weight** (100-900) to go with it; **Oswald Bold** is still there for anyone who preferred it.
+  Saira's digits are all the same width, so a value no longer shifts sideways as its digits
+  change; measured against Oswald over same-length values, that shift reaches 35-45px in the
+  widest field. Narrow digits also make the number *taller*: most fields run out of width before
+  they run out of height, so at the default width the digits gain roughly 14% on a half-width
+  field and a third on **Time - Elapsed** and **Climb - VAM**. Field labels stay in Oswald
+  whatever the number is set to, since at 11dp a condensed face loses the space between a label's
+  words.
+- **Climb - Grade** draws the slope as a coloured wedge behind the number. Its direction follows
+  the sign -- rising for a climb, falling for a descent -- and its height and colour follow the
+  size, over the same seven bands as the Karoo's own Climber scale, with thresholds at
+  2 / 5 / 8 / 11 / 14 / 20%. At 20% the wedge runs corner to corner. Because the wedge cuts
+  diagonally across the number, the number and label take a thin contrasting outline rather than
+  flipping colour wholesale, which no single threshold could get right.
+- Turning zone colouring off now turns the grade wedge off too, on the reading that a rider who
+  wants no colour means everywhere.
+
+### Notes
+
+- Saira is bundled as the variable `Saira[wdth,wght].ttf` from Google Fonts, subset to Latin so
+  the two axes survive without carrying glyphs no field draws. Both it and Oswald are licensed
+  under the SIL Open Font License 1.1; see [OFL.txt](OFL.txt).
+- A non-finite grade takes the lowest band and the floor wedge height rather than the loudest
+  colour and an undefined path.
+- Fields other than Grade render exactly as before when no wedge is present.
+
 ## [1.0.1] - 2026-08-24
 
 ### Added
@@ -54,6 +85,7 @@ First public release.
 - The rounded card behind each field is drawn by Karoo. On a ride page it does not clip the
   extension's view to that card, so the fill rounds its own corners to match.
 
-[Unreleased]: https://github.com/smartycoder/karoo-bignum/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/smartycoder/karoo-bignum/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.1.0
 [1.0.1]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.0.1
 [1.0.0]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.0.0
