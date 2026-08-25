@@ -7,7 +7,7 @@
   "latestVersionCode": 3,
   "developer": "smartycoder",
   "description": "Large, bold numeric data fields with optional HR and power zone coloring.",
-  "releaseNotes": "Numbers now use Saira, with equal-width digits and an adjustable width and weight, so values stop shifting sideways and most fields fit a taller number. Oswald is still available. Climb - Grade draws the slope as a coloured wedge behind the number.",
+  "releaseNotes": "Numbers now use Saira, with equal-width digits and an adjustable width and weight, so values stop shifting sideways and most fields fit a taller number. Decimals and ride-time seconds can be drawn small and raised. Climb - Grade draws the slope as a coloured wedge behind the number. Oswald is still available.",
   "tags": [
     "datafield",
     "numeric"

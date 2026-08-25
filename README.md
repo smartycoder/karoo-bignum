@@ -58,10 +58,24 @@ Without a weight to divide by they show `--` rather than a number that would rea
 
 ### Elapsed time
 
-The seconds are drawn about half size and raised, so `1:34:17` reads as a large **1:34** with a
-small `:17` after it. Hours and minutes are what you read at a glance; the seconds only need to
-be present. Demoting them leaves the rest of the value around 20% taller than it would be if
-every character were the same size.
+Ride time reads `h:mm:ss` throughout — `0:04:59` in the first hour, `0:00:00` before the ride
+starts — so the field never changes shape mid-ride. It is sized against a `0:00:00` template
+either way, so the leading hour costs no room.
+
+With **Raised decimals** on, the seconds come out about half size and raised: `1:34:17` reads as
+a large **1:34** with a small `17` after it. Hours and minutes are what you read at a glance; the
+seconds only need to be present.
+
+### Raised decimals
+
+A setting, on by default, that draws the small end of a value small: a decimal, or a ride time's
+seconds. `34.9` becomes 34⁹, `1:34:17` becomes 1:34¹⁷. The point or colon is dropped, because
+raised digits already say what they are and the separator's width is width the number can have
+instead.
+
+What that width buys depends on the field. Most fields run out of width before they run out of
+height, and there the number comes out taller. Where height is the binding constraint — a wide
+tile with a short value — the number stays the same size and simply sits in more room.
 
 ### Zone coloring
 
