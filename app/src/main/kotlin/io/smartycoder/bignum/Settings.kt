@@ -6,6 +6,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 /** How a field carries its heart rate or power zone. */
 enum class ZoneColorMode {
@@ -24,6 +25,40 @@ enum class ZoneColorMode {
     }
 }
 
+/** Typeface the numbers and headers are drawn in. */
+enum class NumberFont {
+    /** Static Bold, no axes: [FontSetting.width] and [FontSetting.weight] do not apply. */
+    OSWALD,
+
+    /** Variable, with tabular figures. */
+    SAIRA,
+    ;
+
+    companion object {
+        fun from(name: String?): NumberFont? = entries.firstOrNull { it.name == name }
+    }
+}
+
+/**
+ * The typeface and, for a variable one, the axes it is drawn at.
+ *
+ * Width is the setting that decides how big the number ends up: a field's bitmap is exactly as
+ * tall as the digits and as wide as its widest value, and the view scales it to fit, so in
+ * every field where the width is the binding constraint -- which is most of them -- a narrower
+ * face buys height. Weight is taste, and compensates for how much lighter a face looks once it
+ * is narrow.
+ */
+data class FontSetting(
+    val font: NumberFont,
+    /** Percent on Saira's wdth axis. */
+    val width: Int,
+    /** Position on Saira's wght axis; 700 is Bold. */
+    val weight: Int,
+) {
+    /** Whether [width] and [weight] mean anything for this typeface. */
+    val hasAxes: Boolean get() = font == NumberFont.SAIRA
+}
+
 /**
  * Settings that apply to every BigNum field at once, edited in the BigNum app.
  *
@@ -35,6 +70,24 @@ object Settings {
     private const val PREFS = "bignum"
     private const val KEY_ZONE_COLOR_MODE = "zone_color_mode"
     private const val KEY_TEST_MODE = "test_mode"
+    private const val KEY_FONT = "number_font"
+    private const val KEY_FONT_WIDTH = "font_width"
+    private const val KEY_FONT_WEIGHT = "font_weight"
+
+    /** Saira's axis ranges; anything read back from preferences is clamped into them. */
+    private val WIDTH_RANGE = 50..125
+    private val WEIGHT_RANGE = 100..900
+
+    /**
+     * Offered in the app, narrowest first because that is the one worth reaching for. Two
+     * percent a step: near the narrow end that is worth 2-3px of digit height on a half-width
+     * field, which is visible; past about 100 it is under a pixel, but the steps stay even
+     * rather than bunching, so the list reads as a scale instead of a set of opinions.
+     */
+    val WIDTHS = (WIDTH_RANGE.first..WIDTH_RANGE.last step 2).toList()
+    val WEIGHTS = (WEIGHT_RANGE.first..WEIGHT_RANGE.last step 100).toList()
+
+    private val DEFAULT_FONT = FontSetting(NumberFont.SAIRA, width = 50, weight = 900)
 
     /** Replaced by [KEY_ZONE_COLOR_MODE]; still read once so an existing install keeps its choice. */
     private const val LEGACY_KEY_ZONE_COLORS = "zone_colors"
@@ -80,14 +133,46 @@ object Settings {
         prefs(context).edit().putBoolean(KEY_TEST_MODE, enabled).apply()
     }
 
-    fun zoneColorModeFlow(context: Context): Flow<ZoneColorMode> =
-        prefFlow(context, KEY_ZONE_COLOR_MODE, ::zoneColorMode)
+    fun fontSetting(context: Context): FontSetting {
+        val prefs = prefs(context)
+        return resolveFont(
+            font = prefs.getString(KEY_FONT, null),
+            width = prefs.getInt(KEY_FONT_WIDTH, DEFAULT_FONT.width),
+            weight = prefs.getInt(KEY_FONT_WEIGHT, DEFAULT_FONT.weight),
+        )
+    }
 
-    fun testModeFlow(context: Context): Flow<Boolean> = prefFlow(context, KEY_TEST_MODE, ::testMode)
+    /**
+     * Split out from [fontSetting] so the clamping is testable without SharedPreferences. Both
+     * axes are clamped rather than rejected: a value from a future build that offers more steps
+     * should land at the nearest one this build can draw, not throw the whole setting away.
+     */
+    internal fun resolveFont(font: String?, width: Int, weight: Int): FontSetting = FontSetting(
+        font = NumberFont.from(font) ?: DEFAULT_FONT.font,
+        width = width.coerceIn(WIDTH_RANGE),
+        weight = weight.coerceIn(WEIGHT_RANGE),
+    )
+
+    fun setFontSetting(context: Context, setting: FontSetting) {
+        prefs(context).edit()
+            .putString(KEY_FONT, setting.font.name)
+            .putInt(KEY_FONT_WIDTH, setting.width)
+            .putInt(KEY_FONT_WEIGHT, setting.weight)
+            .apply()
+    }
+
+    fun zoneColorModeFlow(context: Context): Flow<ZoneColorMode> =
+        prefFlow(context, setOf(KEY_ZONE_COLOR_MODE), ::zoneColorMode)
+
+    fun testModeFlow(context: Context): Flow<Boolean> = prefFlow(context, setOf(KEY_TEST_MODE), ::testMode)
+
+    /** One flow for all three font keys, so a field still combines five flows and not seven. */
+    fun fontSettingFlow(context: Context): Flow<FontSetting> =
+        prefFlow(context, setOf(KEY_FONT, KEY_FONT_WIDTH, KEY_FONT_WEIGHT), ::fontSetting)
 
     private fun <T> prefFlow(
         context: Context,
-        key: String,
+        keys: Set<String>,
         read: (Context) -> T,
     ): Flow<T> = callbackFlow {
         val prefs = prefs(context)
@@ -95,9 +180,11 @@ object Settings {
         // The listener fires on the main thread, so send without blocking. changed is null when
         // the preferences are cleared wholesale (API 30+), which also means our value changed.
         val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, changed ->
-            if (changed == null || changed == key) trySend(read(context))
+            if (changed == null || changed in keys) trySend(read(context))
         }
         prefs.registerOnSharedPreferenceChangeListener(listener)
         awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
-    }
+        // Writing the three font keys fires the listener three times for one edit; without this
+        // a field would redraw twice for nothing.
+    }.distinctUntilChanged()
 }

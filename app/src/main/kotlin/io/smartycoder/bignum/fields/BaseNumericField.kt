@@ -100,9 +100,13 @@ abstract class BaseNumericField(
                 profileFlow,
                 Settings.zoneColorModeFlow(context),
                 Settings.testModeFlow(context),
-            ) { state, profile, mode, testMode ->
-                compute(state, profile, config.preview, testMode, mode, Theme.textColor(context))
-            }.collect { frame ->
+                Settings.fontSettingFlow(context),
+            ) { state, profile, mode, testMode, font ->
+                // Carried alongside the frame rather than inside it: the font decides how the
+                // value is drawn, not what the value is, and compute() returns from a dozen
+                // places that have no business knowing about typefaces.
+                compute(state, profile, config.preview, testMode, mode, Theme.textColor(context)) to font
+            }.collect { (frame, font) ->
                 // A fresh RemoteViews per update, never a reused one: RemoteViews is an
                 // append-only list of actions with no way to clear it, so reusing the instance
                 // would retain every bitmap ever set and re-serialize the whole growing list on
@@ -113,8 +117,8 @@ abstract class BaseNumericField(
                 val (tPrimary, tSecondary) = split(widthTemplate)
                 FieldRenderer.render(
                     context, views, config, label, iconRes,
-                    tPrimary, tSecondary, primary, secondary, visual.color, visual.background,
-                    frame.wedge,
+                    tPrimary, tSecondary, primary, secondary, visual.color, font,
+                    visual.background, frame.wedge,
                 )
                 emitter.updateView(views)
             }

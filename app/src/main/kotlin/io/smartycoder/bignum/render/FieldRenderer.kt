@@ -13,19 +13,22 @@ import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
 import java.util.concurrent.ConcurrentHashMap
+import io.smartycoder.bignum.FontSetting
+import io.smartycoder.bignum.NumberFont
 import io.smartycoder.bignum.R
 import io.smartycoder.bignum.fields.Wedge
 import io.hammerhead.karooext.models.ViewConfig
 import io.hammerhead.karooext.models.ViewConfig.Alignment
 
 /**
- * Renders a field -- its icon, short label and primary number -- to a Bitmap using the
- * bundled Oswald Bold typeface, and pushes it into the RemoteViews via setImageViewBitmap.
+ * Renders a field -- its icon, short label and primary number -- to a Bitmap in the typeface
+ * the rider picked, and pushes it into the RemoteViews via setImageViewBitmap.
  * The unit suffix (km/h, W, ...) is intentionally not drawn.
  *
  * The header is ours rather than Karoo's: the field sends UpdateGraphicConfig(showHeader =
- * false), which buys the whole tile and lets the label be a short form ("PWR 5s") in the
- * same typeface as the number, instead of Karoo's uppercased displayName ("POWER 5S AVG").
+ * false), which buys the whole tile and lets the label be a short form ("PWR 5s") instead of
+ * Karoo's uppercased displayName ("POWER 5S AVG"). The label is always Oswald -- see
+ * [LABEL_FONT] -- so only the number follows the rider's choice.
  *
  * Neither bitmap is sized to [ViewConfig.viewSize]: on the Karoo the reported view size does
  * not match the actual ImageView, so anything measured against it gets rescaled away or
@@ -53,6 +56,12 @@ object FieldRenderer {
     // The header is drawn at a fixed dp size into its own unscaled ImageView, so it comes out
     // the same on every field size instead of riding along with the number's scale factor.
     private const val LABEL_HEIGHT_DP = 11.07f
+
+    // The header is always Oswald, whatever the number is set in. It is drawn at 11dp, where
+    // the choices that make a face good for a big number stop paying: at that size Saira's
+    // narrow widths lose the space between a label's words ("AVG VAM" reads as one), and its
+    // light weights thin out. Oswald at one fixed size is the constant the tile is read by.
+    private val LABEL_FONT = FontSetting(NumberFont.OSWALD, width = 100, weight = 700)
     private const val ICON_SCALE = 1.4f
     private const val ICON_GAP_DP = 3f
 
@@ -103,6 +112,35 @@ object FieldRenderer {
     private val headerCache = ConcurrentHashMap<HeaderKey, Bitmap>()
 
     /**
+     * Typeface per setting. Building one is a native call that allocates, and render() runs on
+     * every sample of every field, so without this a ride would churn through thousands of
+     * identical Typefaces. Bounded by the settings on offer, so it never needs eviction.
+     */
+    private val typefaceCache = ConcurrentHashMap<FontSetting, Typeface>()
+
+    private fun typefaceFor(context: Context, font: FontSetting): Typeface =
+        typefaceCache.getOrPut(font) {
+            val res = when (font.font) {
+                NumberFont.OSWALD -> R.font.oswald_bold
+                NumberFont.SAIRA -> R.font.saira
+            }
+            val base = runCatching { context.resources.getFont(res) }
+                .getOrDefault(Typeface.DEFAULT_BOLD)
+            if (!font.hasAxes) {
+                base
+            } else {
+                // Paint is the only public way to instance a variable font that is already a
+                // Typeface: Typeface.Builder can only take a file or an asset, and this one
+                // lives in res/font. The derived Typeface is what we keep; the Paint is
+                // scaffolding, which is exactly why it must not be built per frame.
+                Paint().apply {
+                    typeface = base
+                    fontVariationSettings = "'wght' ${font.weight}, 'wdth' ${font.width}"
+                }.typeface ?: base
+            }
+        }
+
+    /**
      * Baseline that centres ink of [inkHeight] (whose bounds start at [inkTop], negative above
      * the baseline) inside a box of [boxHeight].
      *
@@ -112,6 +150,20 @@ object FieldRenderer {
      */
     internal fun baselineFor(boxHeight: Int, inkHeight: Int, inkTop: Int): Float =
         (boxHeight - inkHeight) / 2f - inkTop
+
+    /**
+     * Puts the chosen face on [this]. A Paint copy (the secondary number) inherits both the
+     * typeface and the feature settings, so the superscript comes out in step with the primary.
+     *
+     * Oswald ships as a static Bold with no axes and no `tnum` table, so it is left alone and
+     * comes out exactly as it did before this setting existed.
+     */
+    private fun Paint.applyFont(context: Context, font: FontSetting) {
+        typeface = typefaceFor(context, font)
+        // Equal-width digits: without this the value shifts sideways as digits change, because
+        // the bitmap's right edge is pinned and Saira's "1" is far narrower than its "0".
+        if (font.hasAxes) fontFeatureSettings = "tnum"
+    }
 
     fun render(
         context: Context,
@@ -124,16 +176,14 @@ object FieldRenderer {
         primary: String,
         secondary: String,
         primaryColor: Int,
+        font: FontSetting,
         /** Fill for the whole field, or null to leave Karoo's own background showing. */
         backgroundColor: Int? = null,
         /** Coloured wedge drawn behind the number, or null for every field but Grade. */
         wedge: Wedge? = null,
     ) {
-        val typeface = runCatching { context.resources.getFont(R.font.oswald_bold) }
-            .getOrDefault(Typeface.DEFAULT_BOLD)
-
         val numberPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            this.typeface = typeface
+            applyFont(context, font)
             this.textSize = TEXT_SIZE
             color = primaryColor
             isSubpixelText = true
@@ -200,7 +250,7 @@ object FieldRenderer {
 
         val onBackground = backgroundColor?.let { ZoneColors.onColor(it) }
         val header = header(
-            context, typeface, label, iconRes,
+            context, label, iconRes,
             labelColor = onBackground ?: Theme.textColor(context),
             iconColor = onBackground ?: ICON_COLOR,
             outline = wedge != null,
@@ -296,14 +346,13 @@ object FieldRenderer {
     /** Cached [renderHeader]; see [headerCache]. */
     private fun header(
         context: Context,
-        typeface: Typeface,
         label: String,
         iconRes: Int,
         labelColor: Int,
         iconColor: Int,
         outline: Boolean,
     ): Bitmap = headerCache.getOrPut(HeaderKey(label, iconRes, labelColor, iconColor, outline)) {
-        renderHeader(context, typeface, label, iconRes, labelColor, iconColor, outline)
+        renderHeader(context, label, iconRes, labelColor, iconColor, outline)
     }
 
     /**
@@ -314,7 +363,6 @@ object FieldRenderer {
      */
     private fun renderHeader(
         context: Context,
-        typeface: Typeface,
         label: String,
         iconRes: Int,
         labelColor: Int,
@@ -328,7 +376,7 @@ object FieldRenderer {
         val padding = EDGE_PADDING_DP * density
 
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            this.typeface = typeface
+            applyFont(context, LABEL_FONT)
             color = labelColor
             isSubpixelText = true
             textSize = labelHeight
