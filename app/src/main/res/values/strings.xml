@@ -2,7 +2,8 @@
 <resources>
     <string name="app_name">BigNum</string>
     <string name="extension_name">BigNum</string>
-    <string name="activity_hint">Add BigNum data fields from\nSettings → Profile → Data Pages.</string>
+    <string name="hint_title">Getting started</string>
+    <string name="activity_hint">Add BigNum data fields from Settings → Profile → Data Pages.</string>
 
     <string name="df_speed">Speed</string>
     <string name="df_speed_desc">Speed, big and bold.</string>
@@ -96,7 +97,9 @@
     <string name="setting_font_saira">Saira</string>
     <string name="setting_font_width">Width</string>
     <string name="setting_font_weight">Weight</string>
-    <string name="setting_font_desc">Saira has equal-width digits, so a value does not shift sideways as its digits change, and it can be set narrower — which makes the number taller, because most fields run out of width before they run out of height. Width and weight apply to Saira only; Oswald is a single fixed style. Field labels stay in Oswald either way.</string>
+    <string name="setting_font_desc">Saira has equal-width digits, so a value stops shifting sideways, and it can be set narrower — which makes the number taller. Width and weight apply to Saira only. Labels stay in Oswald.</string>
+    <string name="setting_raised_tail">Raised decimals</string>
+    <string name="setting_raised_tail_desc">Decimals and ride-time seconds drawn small and raised: 34⁹, 1:34¹⁷. Dropping the point leaves the number more room.</string>
 
     <string name="setting_test_mode">Test mode</string>
     <string name="setting_test_mode_desc">Show demo values in every field instead of live data. For screenshots and layout checks. Debug builds only.</string>

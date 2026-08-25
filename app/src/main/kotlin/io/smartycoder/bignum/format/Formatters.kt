@@ -62,25 +62,14 @@ object Formatters {
     }
 
     /**
-     * Splits a formatted duration so the seconds can be drawn smaller and raised: "1:34:17"
-     * becomes "1:34" and ":17". Minutes and hours carry the information a rider reads at a
-     * glance; the seconds only need to be present.
-     *
-     * Also applied to the width template, so the budget the field is scaled against is derived
-     * from the same rule as the value.
+     * Always h:mm:ss, including the leading "0:" of the first hour and a standing clock's
+     * "0:00:00". Dropping the hours below one would save no room -- the field is sized against
+     * a "0:00:00" template either way -- and would have the field change shape under the rider
+     * the moment the ride starts.
      */
-    fun secondsAsSecondary(text: String): Pair<String, String> {
-        val i = text.lastIndexOf(':')
-        return if (i <= 0) text to "" else text.substring(0, i) to text.substring(i)
-    }
-
     val time: (Double, PreferredUnit?) -> Pair<String, String> = { v, _ ->
         val s = (v / 1000.0).toInt().coerceAtLeast(0)
-        val h = s / 3600
-        val m = (s % 3600) / 60
-        val ss = s % 60
-        val text = if (h > 0) "%d:%02d:%02d".fmt(h, m, ss) else "%d:%02d".fmt(m, ss)
-        text to ""
+        "%d:%02d:%02d".fmt(s / 3600, (s % 3600) / 60, s % 60) to ""
     }
 
     /**

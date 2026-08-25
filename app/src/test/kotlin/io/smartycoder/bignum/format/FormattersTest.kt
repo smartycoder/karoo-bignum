@@ -86,8 +86,8 @@ class FormattersTest {
     }
 
     // ── time (input MILLISECONDS) ──────────────────────────────────────────
-    @Test fun `time below 1 hour — m colon ss format`() {
-        assertEquals("5:30" to "", Formatters.time(330_000.0, null))
+    @Test fun `time below 1 hour still carries its hour digit`() {
+        assertEquals("0:05:30" to "", Formatters.time(330_000.0, null))
     }
 
     @Test fun `time at exactly 1 hour — h colon mm colon ss`() {
@@ -95,11 +95,15 @@ class FormattersTest {
     }
 
     @Test fun `time at 59999 ms shows as 0 colon 59`() {
-        assertEquals("0:59" to "", Formatters.time(59_999.0, null))
+        assertEquals("0:00:59" to "", Formatters.time(59_999.0, null))
     }
 
     @Test fun `time at 60000 ms shows as 1 colon 00`() {
-        assertEquals("1:00" to "", Formatters.time(60_000.0, null))
+        assertEquals("0:01:00" to "", Formatters.time(60_000.0, null))
+    }
+
+    @Test fun `a clock that has not started reads zero rather than dashes`() {
+        assertEquals("0:00:00" to "", Formatters.time(0.0, null))
     }
 
     @Test fun `time at 12 hour 34 min 56 sec`() {

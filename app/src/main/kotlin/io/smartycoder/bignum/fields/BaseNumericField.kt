@@ -4,6 +4,7 @@ import android.content.Context
 import android.widget.RemoteViews
 import io.smartycoder.bignum.R
 import io.smartycoder.bignum.Settings
+import io.smartycoder.bignum.format.RaisedTail
 import io.smartycoder.bignum.ZoneColorMode
 import io.smartycoder.bignum.consumerFlow
 import io.smartycoder.bignum.render.FieldRenderer
@@ -24,6 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
@@ -56,19 +58,16 @@ abstract class BaseNumericField(
     abstract val zoneKind: ZoneKind?
     abstract val format: (Double, PreferredUnit?) -> Pair<String, String>
     open val previewValue: Double = 0.0
+
+    /**
+     * Whether test mode swaps in [previewValue]. Elapsed time opts out: the ride clock is the
+     * one value that is real and moving with no sensor paired, so a frozen demo time there makes
+     * a screenshot look broken rather than staged.
+     */
+    open val demoInTestMode: Boolean = true
     /** Rendered through [format] instead of "--" while no value is available. */
     open val missingValue: Double? = null
     protected open fun formatNeedsProfile(): Boolean = false
-
-    /**
-     * Splits formatted text into the part drawn at full size and a trailing part drawn
-     * smaller and raised, the way a Wahoo shows the seconds of a ride time. Default: no
-     * split.
-     *
-     * The same rule is applied to [widthTemplate], so the scale a field renders at follows
-     * from one definition instead of a second template kept in step by hand.
-     */
-    open fun split(text: String): Pair<String, String> = text to ""
 
     /**
      * The value rendered, when it differs from the value the stream carries. Null means there is
@@ -100,24 +99,31 @@ abstract class BaseNumericField(
                 profileFlow,
                 Settings.zoneColorModeFlow(context),
                 Settings.testModeFlow(context),
-                Settings.fontSettingFlow(context),
-            ) { state, profile, mode, testMode, font ->
-                // Carried alongside the frame rather than inside it: the font decides how the
+                Settings.appearanceFlow(context),
+            ) { state, profile, mode, testMode, appearance ->
+                // Carried alongside the frame rather than inside it: appearance decides how the
                 // value is drawn, not what the value is, and compute() returns from a dozen
                 // places that have no business knowing about typefaces.
-                compute(state, profile, config.preview, testMode, mode, Theme.textColor(context)) to font
-            }.collect { (frame, font) ->
+                compute(state, profile, config.preview, testMode, mode, Theme.textColor(context)) to appearance
+            }
+                // Karoo sends a sample whether or not the value moved, and most fields sit still
+                // for long stretches -- an average, a maximum, a total, a temperature. Without
+                // this each of those samples draws a bitmap identical to the one already on
+                // screen and ships it across a process boundary to change nothing. Frame, Visual,
+                // Wedge and Appearance are all data classes, so equality compares what is drawn.
+                .distinctUntilChanged()
+                .collect { (frame, appearance) ->
                 // A fresh RemoteViews per update, never a reused one: RemoteViews is an
                 // append-only list of actions with no way to clear it, so reusing the instance
                 // would retain every bitmap ever set and re-serialize the whole growing list on
                 // each send -- ending in FAILED BINDER TRANSACTION or OOM after a long ride.
                 val views = RemoteViews(context.packageName, R.layout.numeric_field)
                 val visual = frame.visual
-                val (primary, secondary) = split(visual.text)
-                val (tPrimary, tSecondary) = split(widthTemplate)
+                val (primary, secondary) = RaisedTail.split(visual.text, appearance.raisedTail)
+                val (tPrimary, tSecondary) = RaisedTail.template(widthTemplate, appearance.raisedTail)
                 FieldRenderer.render(
                     context, views, config, label, iconRes,
-                    tPrimary, tSecondary, primary, secondary, visual.color, font,
+                    tPrimary, tSecondary, primary, secondary, visual.color, appearance.font,
                     visual.background, frame.wedge,
                 )
                 emitter.updateView(views)
@@ -147,7 +153,7 @@ abstract class BaseNumericField(
             // Ahead of the stream, unlike preview: with a Karoo sitting idle a live 0 and a
             // demo 0 look the same, so test mode has to win even while data is arriving.
             // Page editing keeps deferring to real data when there is any.
-            testMode -> previewValue
+            testMode && demoInTestMode -> previewValue
             preview && state !is StreamState.Streaming -> previewValue
             state is StreamState.Streaming -> state.dataPoint.singleValue
             else -> null

@@ -10,11 +10,19 @@ import org.junit.Test
 class FontSettingTest {
 
     @Test
-    fun `an install that predates the setting gets Saira at its narrowest`() {
-        val setting = Settings.resolveFont(font = null, width = 50, weight = 900)
+    fun `a fresh install draws Saira at its narrowest`() {
+        assertEquals(NumberFont.SAIRA, Settings.DEFAULT_FONT.font)
+        assertEquals(50, Settings.DEFAULT_FONT.width)
+        assertEquals(700, Settings.DEFAULT_FONT.weight)
+    }
+
+    @Test
+    fun `an unset font name falls back to the default`() {
+        val setting = Settings.resolveFont(font = null, width = 62, weight = 800)
         assertEquals(NumberFont.SAIRA, setting.font)
-        assertEquals(50, setting.width)
-        assertEquals(900, setting.weight)
+        // The axes are whatever was stored; only the name was missing.
+        assertEquals(62, setting.width)
+        assertEquals(800, setting.weight)
     }
 
     @Test

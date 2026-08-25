@@ -12,6 +12,7 @@ import android.os.Build
 import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
+import kotlin.math.ceil
 import java.util.concurrent.ConcurrentHashMap
 import io.smartycoder.bignum.FontSetting
 import io.smartycoder.bignum.NumberFont
@@ -49,9 +50,14 @@ object FieldRenderer {
     // its own via BaseNumericField.widthTemplate.
     const val DEFAULT_WIDTH_TEMPLATE = "00.0"
 
-    // Arbitrary; only the bitmap's aspect ratio reaches the screen. Big enough that the
-    // upscale to the real view stays sharp.
+    // The size the first measurement is taken at, before it is scaled to the view -- see
+    // [measure]. Not a drawing size: nothing is drawn at 200 unless a tile happens to want it.
     private const val TEXT_SIZE = 200f
+
+    // Guard rails on the derived size. The floor keeps a nonsense viewSize from producing a
+    // one-pixel bitmap; the ceiling bounds the raster on a tile larger than any this screen has.
+    private const val MIN_TEXT_SIZE = 12f
+    private const val MAX_TEXT_SIZE = 400f
 
     // The header is drawn at a fixed dp size into its own unscaled ImageView, so it comes out
     // the same on every field size instead of riding along with the number's scale factor.
@@ -91,7 +97,7 @@ object FieldRenderer {
      * Size of the secondary part relative to the primary. Tune by eye on the device: it trades
      * how much height the primary gains against whether the secondary is still readable.
      */
-    private const val SECONDARY_SCALE = 0.5f
+    internal const val SECONDARY_SCALE = 0.5f
 
     /**
      * The header depends on nothing that changes between samples, but render() runs on every
@@ -111,12 +117,87 @@ object FieldRenderer {
 
     private val headerCache = ConcurrentHashMap<HeaderKey, Bitmap>()
 
+    // IntArray, so iterating allocates neither a list nor boxed ids.
+    private val BITMAP_IDS = intArrayOf(R.id.bitmap_start, R.id.bitmap_center, R.id.bitmap_end)
+    private val HEADER_IDS = intArrayOf(R.id.header_start, R.id.header_center, R.id.header_end)
+
     /**
      * Typeface per setting. Building one is a native call that allocates, and render() runs on
      * every sample of every field, so without this a ride would churn through thousands of
      * identical Typefaces. Bounded by the settings on offer, so it never needs eviction.
      */
     private val typefaceCache = ConcurrentHashMap<FontSetting, Typeface>()
+
+    private data class MetricsKey(
+        val font: FontSetting,
+        val primary: String,
+        val secondary: String,
+        val boxWidth: Int,
+        val boxHeight: Int,
+    )
+
+    /**
+     * The bitmap a field draws into, and the numbers needed to place text in it. All of it
+     * follows from the font and the width template, neither of which changes between samples,
+     * so measuring it on every one shaped twenty glyphs and measured two strings for an answer
+     * that was already known.
+     *
+     * [textSize] is not always [TEXT_SIZE]: see [measure].
+     */
+    private class Metrics(
+        val textSize: Float,
+        val width: Int,
+        val height: Int,
+        val digitTop: Int,
+        val templateWidth: Float,
+    )
+
+    private val metricsCache = ConcurrentHashMap<MetricsKey, Metrics>()
+
+    /**
+     * Null when the font or template is degenerate enough to leave nothing to draw.
+     *
+     * The raster is sized to the box the number will actually occupy, so the fit* scaleType that
+     * puts it on screen scales it by 1.0 and resamples nothing. That is both the cheapest and
+     * the sharpest option, and it is the only one that is right for every tile: Karoo hands out
+     * views from 238x142 to 478x288, a two-fold range of heights, and a single raster size is
+     * necessarily wasteful at one end and blurry at the other. Measured on a Karoo 3, the old
+     * fixed size was drawing 1.7x too many pixels on a half tile and stretching 1.6x on the
+     * largest one.
+     *
+     * [TEXT_SIZE] survives only as the size the first measurement is taken at, and as the
+     * fallback when [ViewConfig.viewSize] reports nothing usable.
+     */
+    private fun measure(
+        number: Paint,
+        secondary: Paint,
+        templatePrimary: String,
+        templateSecondary: String,
+        boxWidth: Int,
+        boxHeight: Int,
+    ): Metrics? {
+        val digits = Rect()
+        number.getTextBounds(REFERENCE_GLYPHS, 0, REFERENCE_GLYPHS.length, digits)
+        var width = number.measureText(templatePrimary) + secondary.measureText(templateSecondary)
+        if (digits.height() <= 0 || width <= 0f) return null
+
+        // What fit* would scale the reference raster by. Pre-applying it leaves nothing for the
+        // ImageView to do; whichever of the two bounds is tighter is the one that decides the
+        // on-screen size, exactly as before.
+        var size = TEXT_SIZE
+        if (boxWidth > 0 && boxHeight > 0) {
+            val fit = minOf(boxWidth / width, boxHeight / digits.height().toFloat())
+            size = (TEXT_SIZE * fit).coerceIn(MIN_TEXT_SIZE, MAX_TEXT_SIZE)
+            number.textSize = size
+            secondary.textSize = size * SECONDARY_SCALE
+            number.getTextBounds(REFERENCE_GLYPHS, 0, REFERENCE_GLYPHS.length, digits)
+            width = number.measureText(templatePrimary) + secondary.measureText(templateSecondary)
+            if (digits.height() <= 0 || width <= 0f) return null
+        }
+        // ceil, not truncate: measureText returns an advance, and rounding it down shaves a
+        // column off the outermost glyph.
+        return Metrics(size, ceil(width).toInt(), digits.height(), digits.top, width)
+    }
 
     private fun typefaceFor(context: Context, font: FontSetting): Typeface =
         typefaceCache.getOrPut(font) {
@@ -182,6 +263,23 @@ object FieldRenderer {
         /** Coloured wedge drawn behind the number, or null for every field but Grade. */
         wedge: Wedge? = null,
     ) {
+        // The header comes first because the number's box is what it leaves behind. It is cached
+        // and depends on nothing the number does, so this is a reorder rather than extra work.
+        val onBackground = backgroundColor?.let { ZoneColors.onColor(it) }
+        val header = header(
+            context, label, iconRes,
+            labelColor = onBackground ?: Theme.textColor(context),
+            iconColor = onBackground ?: ICON_COLOR,
+            outline = wedge != null,
+        )
+        val pad = (EDGE_PADDING_DP * context.resources.displayMetrics.density).toInt()
+
+        // What the number actually gets on screen, from the view Karoo reports. The layout puts
+        // the header above it and pads the other three sides; see numeric_field.xml.
+        val (viewWidth, viewHeight) = config.viewSize
+        val boxWidth = viewWidth - 2 * pad
+        val boxHeight = viewHeight - header.height - pad
+
         val numberPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             applyFont(context, font)
             this.textSize = TEXT_SIZE
@@ -190,35 +288,40 @@ object FieldRenderer {
         }
         val secondaryPaint = Paint(numberPaint).apply { textSize = TEXT_SIZE * SECONDARY_SCALE }
 
-        val digits = Rect()
-        numberPaint.getTextBounds(REFERENCE_GLYPHS, 0, REFERENCE_GLYPHS.length, digits)
-        val digitHeight = digits.height().toFloat()
-        val templateWidth = numberPaint.measureText(templatePrimary) +
-            secondaryPaint.measureText(templateSecondary)
-        if (digitHeight <= 0f || templateWidth <= 0f) return
-
         // Tight box: a fixed template width keeps the aspect ratio -- and so the on-screen text
         // size -- constant no matter how many characters the current value has.
-        val w = templateWidth.toInt()
-        val h = digitHeight.toInt()
+        val key = MetricsKey(font, templatePrimary, templateSecondary, boxWidth, boxHeight)
+        val metrics = metricsCache[key]
+            ?: measure(numberPaint, secondaryPaint, templatePrimary, templateSecondary, boxWidth, boxHeight)
+                ?.also { metricsCache[key] = it }
+            ?: return
+        numberPaint.textSize = metrics.textSize
+        secondaryPaint.textSize = metrics.textSize * SECONDARY_SCALE
+        val w = metrics.width
+        val h = metrics.height
+        var digitTop = metrics.digitTop
+        // Tracked separately from the box height h: a shrunk value has less ink than the box,
+        // and baselineFor centres the ink it is given inside the box it is given.
+        var digitHeight = metrics.height
+
+        // Measured once and kept: in the common case the shrink below does not fire, and these
+        // are the same two numbers naturalWidth is built from.
+        var primaryWidth = numberPaint.measureText(primary)
+        var secondaryWidth = secondaryPaint.measureText(secondary)
 
         // Values wider than the template (a ride past ten hours, 4-digit power) shrink to fit.
         // Both parts shrink by the same factor so their size relationship is unchanged.
-        val naturalWidth = numberPaint.measureText(primary) + secondaryPaint.measureText(secondary)
-        if (naturalWidth > templateWidth) {
-            val factor = templateWidth / naturalWidth
-            numberPaint.textSize = TEXT_SIZE * factor
-            secondaryPaint.textSize = TEXT_SIZE * SECONDARY_SCALE * factor
-            numberPaint.getTextBounds(REFERENCE_GLYPHS, 0, REFERENCE_GLYPHS.length, digits)
-        }
-
-        val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-
-        fun startX(width: Float) = when (config.alignment) {
-            Alignment.LEFT -> 0f
-            Alignment.CENTER -> (w - width) / 2f
-            Alignment.RIGHT -> w - width
+        val naturalWidth = primaryWidth + secondaryWidth
+        if (naturalWidth > metrics.templateWidth) {
+            val factor = metrics.templateWidth / naturalWidth
+            numberPaint.textSize = metrics.textSize * factor
+            secondaryPaint.textSize = metrics.textSize * SECONDARY_SCALE * factor
+            val shrunk = Rect()
+            numberPaint.getTextBounds(REFERENCE_GLYPHS, 0, REFERENCE_GLYPHS.length, shrunk)
+            digitTop = shrunk.top
+            digitHeight = shrunk.height()
+            primaryWidth = numberPaint.measureText(primary)
+            secondaryWidth = secondaryPaint.measureText(secondary)
         }
 
         // A wedge cuts diagonally across the tile, so a single contrast threshold that flips the
@@ -226,9 +329,27 @@ object FieldRenderer {
         // outline in the contrasting colour survives regardless of where the wedge's edge falls.
         val outlineColor = wedge?.let { ZoneColors.onColor(primaryColor) }
 
-        val primaryWidth = numberPaint.measureText(primary)
-        val secondaryWidth = secondaryPaint.measureText(secondary)
-        val baseline = baselineFor(h, digits.height(), digits.top)
+        // Room for that outline. The box is exactly the digits' ink, so a stroke centred on the
+        // glyph contour hangs half its width outside it -- and got clipped away at precisely the
+        // extremes of each glyph, which is where it was most needed. Only paid when a wedge is
+        // actually behind the number, which costs Grade about 6% of its height against a
+        // neighbouring tile; measured at 102px against 109px on a half tile.
+        val margin = if (outlineColor == null) {
+            0
+        } else {
+            ceil(numberPaint.textSize * TEXT_OUTLINE_WIDTH_FRACTION / 2f).toInt()
+        }
+
+        val bitmap = Bitmap.createBitmap(w + 2 * margin, h + 2 * margin, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+
+        fun startX(width: Float) = margin + when (config.alignment) {
+            Alignment.LEFT -> 0f
+            Alignment.CENTER -> (w - width) / 2f
+            Alignment.RIGHT -> w - width
+        }
+
+        val baseline = margin + baselineFor(h, digitHeight, digitTop)
         val left = startX(primaryWidth + secondaryWidth)
         drawOutlined(canvas, primary, left, baseline, numberPaint, outlineColor)
 
@@ -237,7 +358,7 @@ object FieldRenderer {
             // it reads as attached to the value rather than as a second number below it.
             val small = Rect()
             secondaryPaint.getTextBounds(REFERENCE_GLYPHS, 0, REFERENCE_GLYPHS.length, small)
-            val secondaryBaseline = baseline + digits.top - small.top
+            val secondaryBaseline = baseline + digitTop - small.top
             drawOutlined(canvas, secondary, left + primaryWidth, secondaryBaseline, secondaryPaint, outlineColor)
         }
 
@@ -248,16 +369,18 @@ object FieldRenderer {
             views.setViewVisibility(R.id.wedge, View.GONE)
         }
 
-        val onBackground = backgroundColor?.let { ZoneColors.onColor(it) }
-        val header = header(
-            context, label, iconRes,
-            labelColor = onBackground ?: Theme.textColor(context),
-            iconColor = onBackground ?: ICON_COLOR,
-            outline = wedge != null,
-        )
-        val pad = (EDGE_PADDING_DP * context.resources.displayMetrics.density).toInt()
-        for (id in listOf(R.id.bitmap_start, R.id.bitmap_center, R.id.bitmap_end)) {
-            views.setViewPadding(id, pad, header.height, pad, pad)
+        // The bitmap carries the outline margin outside the digits' box, so the view hands that
+        // much padding back. Without it the bitmap is larger than the space it is fitted into
+        // and fit* shrinks the whole thing to make room, leaving the one field that draws a
+        // wedge visibly smaller than the tile beside it -- measured at 102px against 109px.
+        // Zero when there is no outline, so every other field keeps the padding it had.
+        //
+        // Floored at zero: a low-density screen can have less padding than the outline needs,
+        // and there the outline goes back to clipping rather than the number leaving the tile.
+        val sidePad = (pad - margin).coerceAtLeast(0)
+        val topPad = (header.height - margin).coerceAtLeast(0)
+        for (id in BITMAP_IDS) {
+            views.setViewPadding(id, sidePad, topPad, sidePad, sidePad)
         }
 
         val target = when (config.alignment) {
@@ -265,7 +388,7 @@ object FieldRenderer {
             Alignment.CENTER -> R.id.bitmap_center
             Alignment.RIGHT -> R.id.bitmap_end
         }
-        for (id in listOf(R.id.bitmap_start, R.id.bitmap_center, R.id.bitmap_end)) {
+        for (id in BITMAP_IDS) {
             views.setViewVisibility(id, if (id == target) View.VISIBLE else View.GONE)
         }
         views.setImageViewBitmap(target, bitmap)
@@ -276,7 +399,7 @@ object FieldRenderer {
             Alignment.CENTER -> R.id.header_center
             Alignment.RIGHT -> R.id.header_end
         }
-        for (id in listOf(R.id.header_start, R.id.header_center, R.id.header_end)) {
+        for (id in HEADER_IDS) {
             views.setViewVisibility(id, if (id == headerTarget) View.VISIBLE else View.GONE)
         }
         // A fresh RemoteViews per update means this has to repeat even though the bitmap is

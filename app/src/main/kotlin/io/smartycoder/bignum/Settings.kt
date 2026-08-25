@@ -60,6 +60,13 @@ data class FontSetting(
 }
 
 /**
+ * Everything about how a field is drawn, as opposed to what it says. Carried as one object so a
+ * field still combines five flows: the typed combine() stops at five, and the stream, the
+ * profile, the zone mode and test mode already take four of them.
+ */
+data class Appearance(val font: FontSetting, val raisedTail: Boolean)
+
+/**
  * Settings that apply to every BigNum field at once, edited in the BigNum app.
  *
  * The activity and the extension service share a process, so a change reaches a live field
@@ -73,6 +80,7 @@ object Settings {
     private const val KEY_FONT = "number_font"
     private const val KEY_FONT_WIDTH = "font_width"
     private const val KEY_FONT_WEIGHT = "font_weight"
+    private const val KEY_RAISED_TAIL = "raised_decimals"
 
     /** Saira's axis ranges; anything read back from preferences is clamped into them. */
     private val WIDTH_RANGE = 50..125
@@ -87,7 +95,8 @@ object Settings {
     val WIDTHS = (WIDTH_RANGE.first..WIDTH_RANGE.last step 2).toList()
     val WEIGHTS = (WEIGHT_RANGE.first..WEIGHT_RANGE.last step 100).toList()
 
-    private val DEFAULT_FONT = FontSetting(NumberFont.SAIRA, width = 50, weight = 900)
+    /** What a fresh install draws with. Internal so a test can hold it to that. */
+    internal val DEFAULT_FONT = FontSetting(NumberFont.SAIRA, width = 50, weight = 700)
 
     /** Replaced by [KEY_ZONE_COLOR_MODE]; still read once so an existing install keeps its choice. */
     private const val LEGACY_KEY_ZONE_COLORS = "zone_colors"
@@ -161,14 +170,27 @@ object Settings {
             .apply()
     }
 
+    /**
+     * Whether a value's decimal, or a ride time's seconds, are drawn small and raised. On by
+     * default, which is the closer of the two to what elapsed time did before this was a choice
+     * -- though not identical: the separator is dropped now, so "1:34" + ":17" reads "1:34" +
+     * "17". Off puts every value back at one size, including the time.
+     */
+    fun raisedTail(context: Context): Boolean = prefs(context).getBoolean(KEY_RAISED_TAIL, true)
+
+    fun setRaisedTail(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_RAISED_TAIL, enabled).apply()
+    }
+
     fun zoneColorModeFlow(context: Context): Flow<ZoneColorMode> =
         prefFlow(context, setOf(KEY_ZONE_COLOR_MODE), ::zoneColorMode)
 
     fun testModeFlow(context: Context): Flow<Boolean> = prefFlow(context, setOf(KEY_TEST_MODE), ::testMode)
 
-    /** One flow for all three font keys, so a field still combines five flows and not seven. */
-    fun fontSettingFlow(context: Context): Flow<FontSetting> =
-        prefFlow(context, setOf(KEY_FONT, KEY_FONT_WIDTH, KEY_FONT_WEIGHT), ::fontSetting)
+    fun appearanceFlow(context: Context): Flow<Appearance> =
+        prefFlow(context, setOf(KEY_FONT, KEY_FONT_WIDTH, KEY_FONT_WEIGHT, KEY_RAISED_TAIL)) {
+            Appearance(fontSetting(it), raisedTail(it))
+        }
 
     private fun <T> prefFlow(
         context: Context,
