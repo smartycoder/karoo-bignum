@@ -119,4 +119,85 @@ class ZoneColorsTest {
         // Would have been the HR Z5 red before the palettes were split.
         assertEquals(pwrZ7, ZoneColors.color(ZoneKind.POWER, 9000.0, p))
     }
+
+    // ZoneColors.grade(): Karoo's own Climber thresholds, not Wahoo's, resolved against the
+    // same powerPalette the power zones use. Bands on the signed percent, not the magnitude.
+
+    @Test fun `grade just under 2 percent lands in the mint band`() {
+        assertEquals(z1, ZoneColors.grade(1.9))
+    }
+
+    @Test fun `grade at 2 percent crosses into the teal band`() {
+        // Boundary is inclusive on the upper side: 2.0 belongs to the next band up.
+        assertEquals(z2, ZoneColors.grade(2.0))
+    }
+
+    @Test fun `grade at 5 percent crosses into the yellow band`() {
+        assertEquals(z3, ZoneColors.grade(5.0))
+    }
+
+    @Test fun `grade at 8 percent crosses into the salmon band`() {
+        assertEquals(z4, ZoneColors.grade(8.0))
+    }
+
+    @Test fun `grade at 11 percent crosses into the orange band`() {
+        assertEquals(pwrZ5, ZoneColors.grade(11.0))
+    }
+
+    @Test fun `grade at 14 percent crosses into the red band`() {
+        assertEquals(pwrZ6, ZoneColors.grade(14.0))
+    }
+
+    @Test fun `grade just under 20 percent stays in the red band`() {
+        assertEquals(pwrZ6, ZoneColors.grade(19.9))
+    }
+
+    @Test fun `grade at 20 percent crosses into the magenta band`() {
+        assertEquals(pwrZ7, ZoneColors.grade(20.0))
+    }
+
+    @Test fun `a steep descent lands in the mint band, same as flat ground`() {
+        // Banded on the signed value: Karoo's lowest band already covers negative grades, so
+        // colour says nothing about how steep a descent is -- that is the wedge's job.
+        assertEquals(z1, ZoneColors.grade(-22.0))
+    }
+
+    // ZoneColors.wedgeHeightFraction(): pure so it can be checked without android.graphics,
+    // which unitTests.isReturnDefaultValues makes unusable in this module's tests.
+
+    @Test fun `wedge fraction at flat ground floors to a visible sliver`() {
+        // Without the floor a 0% grade would draw no wedge at all.
+        assertEquals(0.04f, ZoneColors.wedgeHeightFraction(0.0), 0.0001f)
+    }
+
+    @Test fun `wedge fraction grows linearly with percent below the clamp`() {
+        assertEquals(0.5f, ZoneColors.wedgeHeightFraction(10.0), 0.0001f)
+    }
+
+    @Test fun `wedge fraction reaches full height exactly at the 20 percent clamp`() {
+        assertEquals(1f, ZoneColors.wedgeHeightFraction(20.0), 0.0001f)
+    }
+
+    @Test fun `wedge fraction never exceeds 1 beyond the clamp`() {
+        // A sensor spike past 20% must not redraw the whole tile past corner to corner.
+        assertEquals(1f, ZoneColors.wedgeHeightFraction(45.0), 0.0001f)
+    }
+
+    @Test fun `wedge fraction uses the magnitude of a descent, not its sign`() {
+        // Direction is carried separately by Wedge.rising -- a -10% descent must be exactly as
+        // tall as a +10% climb.
+        assertEquals(0.5f, ZoneColors.wedgeHeightFraction(-10.0), 0.0001f)
+    }
+
+    @Test fun `a non-finite grade takes the lowest band rather than the loudest one`() {
+        // NaN < 2 is false, same as every other arm, so a bare when-chain would fall through
+        // to else and paint a bogus reading magenta -- the loudest colour in the palette.
+        assertEquals(z1, ZoneColors.grade(Double.NaN))
+    }
+
+    @Test fun `a non-finite grade yields the floor fraction rather than NaN on the canvas`() {
+        // Without the guard this would survive both coerce calls and reach the canvas as
+        // lineTo(w, NaN), an undefined path rather than a drawing error.
+        assertEquals(0.04f, ZoneColors.wedgeHeightFraction(Double.NaN), 0.0001f)
+    }
 }

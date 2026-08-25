@@ -54,7 +54,7 @@ class BigNumExtension : KarooExtension("bignum", BuildConfig.VERSION_NAME) {
             GradeField(extension, karoo),
             TemperatureField(extension, karoo),
             PowerField(extension, "power", karoo, DataType.Type.POWER, "PWR", previewValue = 237.0),
-            PowerField(extension, "power3s", karoo, DataType.Type.SMOOTHED_3S_AVERAGE_POWER, "PWR 3s", previewValue = 241.0),
+            PowerField(extension, "power3s", karoo, DataType.Type.SMOOTHED_3S_AVERAGE_POWER, "PWR 3s", previewValue = 541.0),
             PowerField(extension, "power5s", karoo, DataType.Type.SMOOTHED_5S_AVERAGE_POWER, "PWR 5s", previewValue = 244.0),
             PowerField(extension, "power10s", karoo, DataType.Type.SMOOTHED_10S_AVERAGE_POWER, "PWR 10s", previewValue = 249.0),
             PowerField(extension, "power30s", karoo, DataType.Type.SMOOTHED_30S_AVERAGE_POWER, "PWR 30s", previewValue = 252.0),

@@ -1,12 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  The app at icon size: a Karoo field card carrying one number with a raised decimal.
+
+  Geometry and colour come from the renderer rather than being chosen again here. The corner
+  radius follows CARD_RADIUS_DP, the raised digit sits at SECONDARY_SCALE with its ink top on
+  the primary's, and the green is FieldRenderer.ICON_COLOR. The glyphs are outlines of the
+  bundled Saira at wght 900, drawn wider than a data field's default because a 48px icon closes
+  up at the narrow end.
+
+  Generated from res/font/saira.ttf; change that pairing rather than these coordinates.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
-    <path android:fillColor="#FFFFFF"
-        android:pathData="M3,3h18v18H3z"
-        android:fillType="evenOdd"/>
-    <path android:fillColor="#000000"
-        android:pathData="M7,7h2v10H7zM11,7h2v10h-2zM15,7h2v10h-2z"/>
+    android:viewportWidth="512"
+    android:viewportHeight="512">
+    <path
+        android:fillColor="#000000"
+        android:pathData="M40.4,0 H471.6 A40.4,40.4 0 0 1 512.0,40.4 V471.6 A40.4,40.4 0 0 1 471.6,512.0 H40.4 A40.4,40.4 0 0 1 0,471.6 V40.4 A40.4,40.4 0 0 1 40.4,0 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M182.0 465.9Q148.6 465.9 123.9 460.6Q99.3 455.2 83.2 442.7Q67.1 430.1 59.0 408.1Q51.0 386.0 51.0 353.2Q51.0 321.0 57.1 300.7Q63.3 280.5 76.5 269.1Q89.7 257.8 110.0 253.0V250.6Q81.4 242.3 68.0 219.3Q54.6 196.4 54.6 152.2Q54.6 119.4 63.2 98.9Q71.9 78.3 88.3 66.7Q104.7 55.0 128.2 50.6Q151.8 46.1 182.2 46.1Q213.2 46.1 237.0 50.6Q260.9 55.0 277.1 66.7Q293.2 78.3 301.2 98.9Q309.2 119.4 309.2 152.2Q309.2 196.4 295.7 219.3Q282.3 242.3 253.8 250.6V253.0Q274.4 257.8 287.6 269.1Q300.9 280.5 307.1 300.7Q313.4 321.0 313.4 353.2Q313.4 386.0 305.4 408.1Q297.4 430.1 281.0 442.7Q264.7 455.2 240.3 460.6Q215.8 465.9 182.0 465.9ZM182.1 382.4Q193.8 382.4 198.9 378.9Q204.0 375.3 204.7 365.4Q205.5 355.6 205.5 337.7Q205.5 324.0 205.1 315.0Q204.8 306.1 202.8 301.0Q200.7 296.0 195.9 294.2Q191.1 292.4 182.2 292.4Q173.3 292.4 168.6 294.2Q164.0 296.0 161.5 301.0Q159.0 306.1 158.7 315.0Q158.3 324.0 158.3 337.7Q158.3 355.6 159.1 365.4Q159.9 375.3 165.1 378.9Q170.3 382.4 182.1 382.4ZM181.9 214.9Q193.3 214.9 197.9 212.5Q202.5 210.1 203.4 201.1Q204.3 192.2 204.3 173.1Q204.3 154.0 203.4 145.1Q202.5 136.1 197.9 133.1Q193.3 130.2 182.2 130.2Q170.8 130.2 166.1 133.1Q161.3 136.1 160.4 145.1Q159.5 154.0 159.5 173.1Q159.5 192.2 160.4 201.1Q161.3 210.1 166.1 212.5Q170.9 214.9 181.9 214.9Z" />
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M396.6 253.6Q388.8 253.6 379.1 252.9Q369.5 252.1 359.9 250.8Q350.4 249.4 342.3 247.9V207.4Q350.7 208.0 357.8 208.6Q365.0 209.3 371.2 209.4Q377.5 209.5 382.6 209.5Q391.1 209.5 396.1 208.9Q401.1 208.3 403.5 206.1Q405.8 203.8 406.6 199.1Q407.3 194.3 407.3 185.9Q407.3 177.6 406.6 172.8Q405.8 168.0 403.4 165.8Q401.0 163.6 396.3 162.8Q391.5 162.1 383.2 162.1Q376.6 162.1 370.1 162.2Q363.5 162.4 356.9 162.8Q350.4 163.3 343.8 164.2V46.1H452.4V90.5H391.5V119.7Q394.6 119.3 397.8 118.9Q401.1 118.5 404.6 118.4Q408.2 118.2 412.1 118.2Q425.9 118.2 435.3 122.1Q444.6 126.0 450.3 133.9Q455.9 141.8 458.5 153.7Q461.0 165.7 461.0 181.8Q461.0 201.8 458.0 215.5Q455.0 229.2 447.9 237.5Q440.7 245.9 428.2 249.7Q415.7 253.6 396.6 253.6Z" />
 </vector>

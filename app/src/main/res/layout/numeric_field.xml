@@ -12,6 +12,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+    <!--
+      The grade wedge, drawn first so it sits behind the number and header. Deliberately not
+      sized to ViewConfig.viewSize (see FieldRenderer): it is a linear ramp, so stretching it
+      independently in x and y under fitXY still leaves it a wedge; only the angle changes, and
+      the angle carries no information here.
+    -->
+    <ImageView android:id="@+id/wedge"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="fitXY"
+        android:visibility="gone"
+        android:contentDescription="@null"/>
+
     <ImageView android:id="@+id/bitmap_start"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

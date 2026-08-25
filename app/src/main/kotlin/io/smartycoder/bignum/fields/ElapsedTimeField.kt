@@ -13,12 +13,19 @@ class ElapsedTimeField(extension: String, karoo: KarooSystemService)
     override val zoneKind = null
     override val format = Formatters.time
 
-    // Seconds are always the secondary part: minutes and hours carry the information, and
-    // demoting the seconds buys the rest of the value about 20% more height.
-    override fun split(text: String) = Formatters.secondsAsSecondary(text)
-
-    // "0" rather than "8": in Oswald the digits are not tabular and "0" is the widest, so
-    // a template written with "8" is narrower than values the field really shows.
+    // "0" rather than "8": on Saira every digit is the same width, but Oswald's are not and
+    // its "0" is the widest, so a template written with "8" would be narrower than values the
+    // field really shows for a rider who picked Oswald. The seconds are demoted by the shared
+    // raised-tail rule rather than by anything this field does.
     override val widthTemplate = "0:00:00"
     override val previewValue = 5_073_000.0
+
+    // Test mode fakes every other field so a page can be shot without a ride. This one it must
+    // not: the clock is real whether or not anything is paired, and watching it run is how you
+    // tell a live field from a frozen one.
+    override val demoInTestMode = false
+
+    // Before the ride starts there is no stream, and "--" says nothing a stopped clock does not
+    // say better.
+    override val missingValue = 0.0
 }

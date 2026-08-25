@@ -1,9 +1,19 @@
 # karoo-bignum
 
-Large, bold numeric data fields for the Hammerhead Karoo, rendered in **Oswald Bold** so the
-number fills the field instead of floating in the middle of it. 41 fields covering speed, heart
-rate, power, cadence, climbing and time, with optional heart-rate and power zone coloring driven
-by your Karoo `UserProfile`.
+Large, bold numeric data fields for the Hammerhead Karoo, drawn so the number fills the field
+instead of floating in the middle of it. 41 fields covering speed, heart rate, power, cadence,
+climbing and time, with optional heart-rate and power zone coloring driven by your Karoo
+`UserProfile`.
+
+Numbers are set in **Saira** by default, with equal-width digits so a value does not shift
+sideways as its digits change, and an adjustable width and weight — narrower digits make the
+number taller, because most fields run out of width before they run out of height. **Oswald
+Bold** remains available in the app's settings, and field labels are set in it whichever number
+font you pick.
+
+**Climb - Grade** draws the slope as a coloured wedge behind the number, rising for a climb and
+falling for a descent, using the same seven colour bands the Karoo's own Climber scale does. The
+wedge reaches corner to corner at 20%.
 
 Built on Hammerhead's [karoo-ext](https://github.com/hammerheadnav/karoo-ext) SDK.
 
@@ -15,7 +25,8 @@ The same page in each of the three zone coloring modes.
 |---|---|---|
 | ![Zone coloring off](docs/screenshots/zones-off.png) | ![Zone color on the number](docs/screenshots/zones-number.png) | ![Zone color filling the field](docs/screenshots/zones-fill.png) |
 
-`SPEED` and `CAD` have no zones, so they stay in the normal text color in every mode.
+`SPEED`, `GRADE` and `TIME` have no zones, so they stay in the normal text color in every mode.
+`GRADE` is showing 22% here to put its wedge at full height; a real road puts it lower.
 
 ## Fields
 
@@ -47,10 +58,24 @@ Without a weight to divide by they show `--` rather than a number that would rea
 
 ### Elapsed time
 
-The seconds are drawn about half size and raised, so `1:34:17` reads as a large **1:34** with a
-small `:17` after it. Hours and minutes are what you read at a glance; the seconds only need to
-be present. Demoting them leaves the rest of the value around 20% taller than it would be if
-every character were the same size.
+Ride time reads `h:mm:ss` throughout — `0:04:59` in the first hour, `0:00:00` before the ride
+starts — so the field never changes shape mid-ride. It is sized against a `0:00:00` template
+either way, so the leading hour costs no room.
+
+With **Raised decimals** on, the seconds come out about half size and raised: `1:34:17` reads as
+a large **1:34** with a small `17` after it. Hours and minutes are what you read at a glance; the
+seconds only need to be present.
+
+### Raised decimals
+
+A setting, on by default, that draws the small end of a value small: a decimal, or a ride time's
+seconds. `34.9` becomes 34⁹, `1:34:17` becomes 1:34¹⁷. The point or colon is dropped, because
+raised digits already say what they are and the separator's width is width the number can have
+instead.
+
+What that width buys depends on the field. Most fields run out of width before they run out of
+height, and there the number comes out taller. Where height is the binding constraint — a wide
+tile with a short value — the number stays the same size and simply sits in more room.
 
 ### Zone coloring
 
@@ -141,5 +166,7 @@ BigNum is free and open source. If it earns its place on your bars:
 
 Apache-2.0 — see [LICENSE](LICENSE).
 
-Oswald is licensed under the SIL Open Font License 1.1, © Vernon Adams et al. —
-see [OFL.txt](OFL.txt).
+Oswald (© Vernon Adams et al.) and Saira (© Omnibus-Type) are both licensed under the SIL Open
+Font License 1.1 — see [OFL.txt](OFL.txt). Saira is bundled as the variable
+`Saira[wdth,wght].ttf` from Google Fonts, subset to Latin so the axes survive but the file does
+not carry glyphs no field ever draws.
