@@ -23,7 +23,7 @@ The same page in each of the three zone coloring modes.
 
 | Off | Number | Field background |
 |---|---|---|
-| ![Zone coloring off](docs/screenshots/zones-off.png) | ![Zone color on the number](docs/screenshots/zones-number.png) | ![Zone color filling the field](docs/screenshots/zones-fill.png) |
+| <img src="docs/screenshots/zones-off.png" width="240" alt="Zone coloring off"> | <img src="docs/screenshots/zones-number.png" width="240" alt="Zone color on the number"> | <img src="docs/screenshots/zones-fill.png" width="240" alt="Zone color filling the field"> |
 
 `SPEED`, `GRADE` and `TIME` have no zones, so they stay in the normal text color in every mode.
 `GRADE` is showing 22% here to put its wedge at full height; a real road puts it lower.
