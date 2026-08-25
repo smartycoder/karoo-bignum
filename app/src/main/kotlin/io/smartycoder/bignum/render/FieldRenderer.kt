@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.os.Build
@@ -13,6 +14,7 @@ import android.view.View
 import android.widget.RemoteViews
 import java.util.concurrent.ConcurrentHashMap
 import io.smartycoder.bignum.R
+import io.smartycoder.bignum.fields.Wedge
 import io.hammerhead.karooext.models.ViewConfig
 import io.hammerhead.karooext.models.ViewConfig.Alignment
 
@@ -65,6 +67,17 @@ object FieldRenderer {
     /** Matches the corner radius Karoo draws its own field cards with. */
     private const val CARD_RADIUS_DP = 10f
 
+    // Width of the outline stroke drawn under the number and label when a wedge sits behind
+    // them, as a fraction of the paint's text size so it scales the same way shrunk text does
+    // rather than looking heavy on a shrunk value. Only ever used when a wedge is present, so
+    // every other field's rendering is untouched.
+    private const val TEXT_OUTLINE_WIDTH_FRACTION = 0.05f
+
+    // Square canvas the wedge is drawn into before being stretched to fill the tile. The wedge
+    // is a linear ramp with straight edges, so an independent x/y stretch under scaleType="fitXY"
+    // still leaves it a wedge -- only its angle changes, and the angle carries no information.
+    private const val WEDGE_BITMAP_SIZE = 64
+
     /**
      * Size of the secondary part relative to the primary. Tune by eye on the device: it trades
      * how much height the primary gains against whether the secondary is still readable.
@@ -76,13 +89,15 @@ object FieldRenderer {
      * one, so it is drawn once per distinct field and reused. Alignment is not part of the key:
      * the bitmap is content-sized, so the layout does the aligning. Both colours are, because
      * on a zone fill they follow the fill -- without them in the key a field crossing into the
-     * next zone would be served the previous zone's header.
+     * next zone would be served the previous zone's header. [outline] is too: the same label
+     * gets drawn with and without the wedge outline depending on whether this update carries one.
      */
     private data class HeaderKey(
         val label: String,
         val iconRes: Int,
         val labelColor: Int,
         val iconColor: Int,
+        val outline: Boolean,
     )
 
     private val headerCache = ConcurrentHashMap<HeaderKey, Bitmap>()
@@ -111,6 +126,8 @@ object FieldRenderer {
         primaryColor: Int,
         /** Fill for the whole field, or null to leave Karoo's own background showing. */
         backgroundColor: Int? = null,
+        /** Coloured wedge drawn behind the number, or null for every field but Grade. */
+        wedge: Wedge? = null,
     ) {
         val typeface = runCatching { context.resources.getFont(R.font.oswald_bold) }
             .getOrDefault(Typeface.DEFAULT_BOLD)
@@ -154,11 +171,16 @@ object FieldRenderer {
             Alignment.RIGHT -> w - width
         }
 
+        // A wedge cuts diagonally across the tile, so a single contrast threshold that flips the
+        // whole number black-on-white cannot work -- only part of the number crosses it. An
+        // outline in the contrasting colour survives regardless of where the wedge's edge falls.
+        val outlineColor = wedge?.let { ZoneColors.onColor(primaryColor) }
+
         val primaryWidth = numberPaint.measureText(primary)
         val secondaryWidth = secondaryPaint.measureText(secondary)
         val baseline = baselineFor(h, digits.height(), digits.top)
         val left = startX(primaryWidth + secondaryWidth)
-        canvas.drawText(primary, left, baseline, numberPaint)
+        drawOutlined(canvas, primary, left, baseline, numberPaint, outlineColor)
 
         if (secondary.isNotEmpty()) {
             // Superscript: the secondary sits to the right with its ink top on the primary's, so
@@ -166,7 +188,14 @@ object FieldRenderer {
             val small = Rect()
             secondaryPaint.getTextBounds(REFERENCE_GLYPHS, 0, REFERENCE_GLYPHS.length, small)
             val secondaryBaseline = baseline + digits.top - small.top
-            canvas.drawText(secondary, left + primaryWidth, secondaryBaseline, secondaryPaint)
+            drawOutlined(canvas, secondary, left + primaryWidth, secondaryBaseline, secondaryPaint, outlineColor)
+        }
+
+        if (wedge != null) {
+            views.setViewVisibility(R.id.wedge, View.VISIBLE)
+            views.setImageViewBitmap(R.id.wedge, wedgeBitmap(wedge))
+        } else {
+            views.setViewVisibility(R.id.wedge, View.GONE)
         }
 
         val onBackground = backgroundColor?.let { ZoneColors.onColor(it) }
@@ -174,6 +203,7 @@ object FieldRenderer {
             context, typeface, label, iconRes,
             labelColor = onBackground ?: Theme.textColor(context),
             iconColor = onBackground ?: ICON_COLOR,
+            outline = wedge != null,
         )
         val pad = (EDGE_PADDING_DP * context.resources.displayMetrics.density).toInt()
         for (id in listOf(R.id.bitmap_start, R.id.bitmap_center, R.id.bitmap_end)) {
@@ -215,6 +245,54 @@ object FieldRenderer {
         }
     }
 
+    /**
+     * Draws [text] with a thin outline in [outlineColor] first, then the fill on top, using the
+     * same [paint] for both passes -- so the outline always matches the fill's size and position
+     * exactly. Null [outlineColor] draws the fill only, unchanged from before wedges existed.
+     */
+    private fun drawOutlined(canvas: Canvas, text: String, x: Float, y: Float, paint: Paint, outlineColor: Int?) {
+        if (outlineColor != null) {
+            val fillColor = paint.color
+            paint.style = Paint.Style.STROKE
+            paint.strokeWidth = paint.textSize * TEXT_OUTLINE_WIDTH_FRACTION
+            paint.color = outlineColor
+            canvas.drawText(text, x, y, paint)
+            paint.style = Paint.Style.FILL
+            paint.color = fillColor
+        }
+        canvas.drawText(text, x, y, paint)
+    }
+
+    /**
+     * A right triangle sized so that, once stretched to fill the tile, it reaches [Wedge.fraction]
+     * of the tile height at the far edge -- the near edge stays at zero. [Wedge.rising] mirrors
+     * which edge is the far one: right for a climb, left for a descent.
+     */
+    private fun wedgeBitmap(wedge: Wedge): Bitmap {
+        val size = WEDGE_BITMAP_SIZE
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = wedge.color
+        }
+        val w = size.toFloat()
+        val h = size.toFloat()
+        val peak = h * wedge.fraction
+        val path = Path().apply {
+            moveTo(0f, h)
+            lineTo(w, h)
+            if (wedge.rising) {
+                lineTo(w, h - peak)
+            } else {
+                lineTo(0f, h - peak)
+            }
+            close()
+        }
+        canvas.drawPath(path, paint)
+        return bitmap
+    }
+
     /** Cached [renderHeader]; see [headerCache]. */
     private fun header(
         context: Context,
@@ -223,8 +301,9 @@ object FieldRenderer {
         iconRes: Int,
         labelColor: Int,
         iconColor: Int,
-    ): Bitmap = headerCache.getOrPut(HeaderKey(label, iconRes, labelColor, iconColor)) {
-        renderHeader(context, typeface, label, iconRes, labelColor, iconColor)
+        outline: Boolean,
+    ): Bitmap = headerCache.getOrPut(HeaderKey(label, iconRes, labelColor, iconColor, outline)) {
+        renderHeader(context, typeface, label, iconRes, labelColor, iconColor, outline)
     }
 
     /**
@@ -240,6 +319,7 @@ object FieldRenderer {
         iconRes: Int,
         labelColor: Int,
         iconColor: Int,
+        outline: Boolean,
     ): Bitmap {
         val density = context.resources.displayMetrics.density
         val labelHeight = LABEL_HEIGHT_DP * density
@@ -277,11 +357,16 @@ object FieldRenderer {
             setBounds(left.toInt(), iconTop, left.toInt() + iconSize, iconTop + iconSize)
             draw(canvas)
         }
-        canvas.drawText(
+        // The wedge reaches the tile's top edge above 12%, where the label lives, so the label
+        // needs the same outline treatment as the number once a wedge is behind it.
+        val outlineColor = if (outline) ZoneColors.onColor(labelColor) else null
+        drawOutlined(
+            canvas,
             label,
             left + iconSize + iconGap,
             (h - bounds.height()) / 2f - bounds.top,
             paint,
+            outlineColor,
         )
         return bitmap
     }

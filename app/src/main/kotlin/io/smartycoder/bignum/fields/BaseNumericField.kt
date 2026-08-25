@@ -27,6 +27,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
+/**
+ * A wedge behind the number: how far up the tile it reaches, its colour, and which way it runs --
+ * rising for a climb, falling for a descent.
+ */
+data class Wedge(val fraction: Float, val color: Int, val rising: Boolean)
+
 abstract class BaseNumericField(
     extension: String,
     typeId: String,
@@ -70,6 +76,9 @@ abstract class BaseNumericField(
      */
     open fun displayValue(raw: Double, profile: UserProfile?): Double? = raw
 
+    /** Wedge behind the number for this field's [raw] value. Null for every field but Grade. */
+    open fun wedge(raw: Double): Wedge? = null
+
     final override fun startView(
         context: Context,
         config: ViewConfig,
@@ -93,17 +102,19 @@ abstract class BaseNumericField(
                 Settings.testModeFlow(context),
             ) { state, profile, mode, testMode ->
                 compute(state, profile, config.preview, testMode, mode, Theme.textColor(context))
-            }.collect { visual ->
+            }.collect { frame ->
                 // A fresh RemoteViews per update, never a reused one: RemoteViews is an
                 // append-only list of actions with no way to clear it, so reusing the instance
                 // would retain every bitmap ever set and re-serialize the whole growing list on
                 // each send -- ending in FAILED BINDER TRANSACTION or OOM after a long ride.
                 val views = RemoteViews(context.packageName, R.layout.numeric_field)
+                val visual = frame.visual
                 val (primary, secondary) = split(visual.text)
                 val (tPrimary, tSecondary) = split(widthTemplate)
                 FieldRenderer.render(
                     context, views, config, label, iconRes,
                     tPrimary, tSecondary, primary, secondary, visual.color, visual.background,
+                    frame.wedge,
                 )
                 emitter.updateView(views)
             }
@@ -117,6 +128,9 @@ abstract class BaseNumericField(
      */
     private data class Visual(val text: String, val color: Int, val background: Int?)
 
+    /** One update's worth of drawing: the number/fill and the wedge behind it, if any. */
+    private data class Frame(val visual: Visual, val wedge: Wedge?)
+
     private fun compute(
         state: StreamState,
         profile: UserProfile?,
@@ -124,7 +138,7 @@ abstract class BaseNumericField(
         testMode: Boolean,
         mode: ZoneColorMode,
         defaultColor: Int,
-    ): Visual {
+    ): Frame {
         val raw: Double? = when {
             // Ahead of the stream, unlike preview: with a Karoo sitting idle a live 0 and a
             // demo 0 look the same, so test mode has to win even while data is arriving.
@@ -138,22 +152,25 @@ abstract class BaseNumericField(
             // No zone applies to a missing value, so no fill either -- an empty field should not
             // sit there in a colour that says something about data it does not have. The fallback
             // still goes through displayValue: a field deriving W/kg from watts must not print it
-            // as raw watts just because this path is shorter.
+            // as raw watts just because this path is shorter. No wedge either: there is no raw
+            // value for it to be drawn from.
             val fallback = missingValue?.let { displayValue(it, profile) }
-                ?: return Visual("--", defaultColor, null)
-            return Visual(format(fallback, profile?.preferredUnit).first, defaultColor, null)
+                ?: return Frame(Visual("--", defaultColor, null), null)
+            return Frame(Visual(format(fallback, profile?.preferredUnit).first, defaultColor, null), null)
         }
-        val display = displayValue(raw, profile) ?: return Visual("--", defaultColor, null)
+        val display = displayValue(raw, profile) ?: return Frame(Visual("--", defaultColor, null), null)
         val text = format(display, profile?.preferredUnit).first
+        // A rider who turned zone colours off probably means everywhere, including the wedge.
+        val wedgeValue = if (mode != ZoneColorMode.OFF) wedge(raw) else null
         val zone = zoneKind
             ?.takeIf { mode != ZoneColorMode.OFF }
             // raw, not display: zones are defined on the value the stream carries. A field that
             // shows W/kg derived from watts still has its zone decided by those watts.
             ?.let { ZoneColors.color(it, raw, profile) }
-            ?: return Visual(text, defaultColor, null)
+            ?: return Frame(Visual(text, defaultColor, null), wedgeValue)
         return when (mode) {
-            ZoneColorMode.FILL -> Visual(text, ZoneColors.onColor(zone), zone)
-            else -> Visual(text, zone, null)
+            ZoneColorMode.FILL -> Frame(Visual(text, ZoneColors.onColor(zone), zone), wedgeValue)
+            else -> Frame(Visual(text, zone, null), wedgeValue)
         }
     }
 }

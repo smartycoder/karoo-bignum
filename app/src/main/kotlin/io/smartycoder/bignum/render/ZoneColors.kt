@@ -1,6 +1,7 @@
 package io.smartycoder.bignum.render
 
 import io.hammerhead.karooext.models.UserProfile
+import kotlin.math.abs
 
 /**
  * Karoo's own zone colors, sampled from the zone dots on its Heart Rate Zones and Power Zones
@@ -69,5 +70,61 @@ object ZoneColors {
             .let { if (it < 0) 0 else it }
             .coerceAtMost(palette.lastIndex)
         return palette[idx]
+    }
+
+    // Karoo's own Climber thresholds -- 2 / 5 / 8 / 11 / 14 / 20, not Wahoo's -- matching the
+    // device the extension runs on beats matching the device the idea came from. Kept next to
+    // powerPalette rather than in a separate table so there is one place holding these colours.
+    // Only the top one, 20.0, is named: it is the sole threshold wedgeHeightFraction also needs,
+    // so it has to be a shared constant rather than a literal duplicated in two places; the other
+    // five appear only here and stay bare literals.
+    private const val GRADE_STEEP_PERCENT = 20.0
+
+    /**
+     * Zone colour for a grade [percent], banded on Karoo's Climber scale and resolved against
+     * the same [powerPalette] the power zones use -- the hues match Karoo's own gradient scale
+     * to within a degree.
+     *
+     * Banded on the signed value, not its magnitude: Karoo's lowest band already covers negative
+     * grades, so a descent colours the same as flat ground. Steepness of a descent is carried by
+     * the wedge's height and direction instead, not by colour.
+     *
+     * Non-finite [percent] takes the lowest band rather than falling through every `<` comparison
+     * to the last `else` -- NaN < 2 is false same as every other comparison, so an unguarded scale
+     * would paint a bogus reading magenta, the loudest colour in the palette for a value that
+     * means nothing. Grade readings are known to spike, so this input is expected to misbehave.
+     */
+    fun grade(percent: Double): Int {
+        if (!percent.isFinite()) return powerPalette[0]
+        val idx = when {
+            percent < 2 -> 0
+            percent < 5 -> 1
+            percent < 8 -> 2
+            percent < 11 -> 3
+            percent < 14 -> 4
+            percent < GRADE_STEEP_PERCENT -> 5
+            else -> 6
+        }
+        return powerPalette[idx]
+    }
+
+    // Floor so a near-zero grade still shows a sliver of wedge rather than nothing.
+    private const val WEDGE_MIN_FRACTION = 0.04f
+
+    /**
+     * How far up the tile a grade wedge reaches: 0 at flat ground, 1 at |[percent]| ==
+     * [GRADE_STEEP_PERCENT] -- Karoo's top band -- so the wedge spends its whole range on
+     * gradients a rider actually meets instead of being swamped by a sensor-noise spike.
+     *
+     * Pure and internal rather than private so it can be exercised directly from tests: the
+     * unit test suite runs with android.graphics unusable, so the wedge maths has to live where
+     * it does not need a Canvas to check.
+     */
+    internal fun wedgeHeightFraction(percent: Double): Float {
+        // Same guard as grade(): NaN would otherwise survive both coerce calls and reach the
+        // canvas as a NaN coordinate in a lineTo(), an undefined path rather than a drawing error.
+        if (!percent.isFinite()) return WEDGE_MIN_FRACTION
+        val raw = (abs(percent) / GRADE_STEEP_PERCENT).toFloat().coerceAtMost(1f)
+        return raw.coerceAtLeast(WEDGE_MIN_FRACTION)
     }
 }
