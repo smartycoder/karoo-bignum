@@ -3,6 +3,7 @@ package io.smartycoder.bignum.format
 import io.hammerhead.karooext.models.UserProfile.PreferredUnit
 import io.hammerhead.karooext.models.UserProfile.PreferredUnit.UnitType
 import java.util.Locale
+import java.util.TimeZone
 
 object Formatters {
 
@@ -62,14 +63,65 @@ object Formatters {
     }
 
     /**
-     * Always h:mm:ss, including the leading "0:" of the first hour and a standing clock's
-     * "0:00:00". Dropping the hours below one would save no room -- the field is sized against
-     * a "0:00:00" template either way -- and would have the field change shape under the rider
-     * the moment the ride starts.
+     * h:mm:ss from one hour, m:ss below it.
+     *
+     * The leading "0:" is dropped rather than kept for a steady shape, because the field is
+     * scaled against [timeTemplate] and two glyphs fewer is height the number gets to keep: on
+     * every tile where width is the binding constraint -- which is most of them -- "12:23" is
+     * drawn appreciably taller than "0:12:23". Where height binds instead, the value simply
+     * comes out shorter at the same size. The price is a visible step down as the clock passes
+     * the hour.
      */
     val time: (Double, PreferredUnit?) -> Pair<String, String> = { v, _ ->
         val s = (v / 1000.0).toInt().coerceAtLeast(0)
-        "%d:%02d:%02d".fmt(s / 3600, (s % 3600) / 60, s % 60) to ""
+        val hours = s / 3600
+        val text =
+            if (hours > 0) "%d:%02d:%02d".fmt(hours, (s % 3600) / 60, s % 60)
+            else "%d:%02d".fmt(s / 60, s % 60)
+        text to ""
+    }
+
+    /**
+     * The width budget for a duration [time] has already formatted, which is the shape that
+     * value was drawn in. Without this the short form would be scaled against "0:00:00" and
+     * would gain nothing at all.
+     */
+    // "0" rather than "8" in both: on Saira every digit is the same width, but Oswald's are
+    // not and its "0" is the widest, so an "8" template would be narrower than values the field
+    // really draws for a rider who picked Oswald.
+    fun timeTemplate(text: String): String =
+        if (text.count { it == ':' } > 1) "0:00:00" else "00:00"
+
+    /**
+     * A wall clock as h:mm, in the device's own time zone.
+     *
+     * karoo-ext does not say what TIME_OF_ARRIVAL carries and the Karoo is not consistent about
+     * it -- elapsed time arrives in milliseconds, a FIT timestamp in seconds -- so the magnitude
+     * decides which of the four plausible encodings it is.
+     * ponytail: collapses to one branch the day it is measured against a real route.
+     */
+    val clock: (Double, PreferredUnit?) -> Pair<String, String> = { v, _ ->
+        val m = minuteOfDay(v)
+        "%d:%02d".fmt(m / 60, m % 60) to ""
+    }
+
+    /**
+     * Minutes past local midnight for a value that may be an instant or an offset into the day.
+     *
+     * The four ranges do not overlap: seconds into a day stop at 86_399, and an epoch in seconds
+     * has passed 1e9 since 2001. The one blind spot is the first 86 seconds after midnight in
+     * milliseconds-into-the-day, read as seconds; an ETA lands there about a minute a day.
+     */
+    internal fun minuteOfDay(v: Double): Int = when {
+        v >= 1e11 -> localMinutes(v.toLong())
+        v >= 1e8 -> localMinutes((v * 1000.0).toLong())
+        v >= 86_400 -> ((v / 60_000).toInt()) % 1440
+        else -> ((v / 60).toInt()) % 1440
+    }
+
+    private fun localMinutes(epochMillis: Long): Int {
+        val local = epochMillis + TimeZone.getDefault().getOffset(epochMillis)
+        return (Math.floorMod(local / 60_000, 1440L)).toInt()
     }
 
     /**

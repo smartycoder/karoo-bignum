@@ -1,9 +1,9 @@
 # karoo-bignum
 
 Large, bold numeric data fields for the Hammerhead Karoo, drawn so the number fills the field
-instead of floating in the middle of it. 41 fields covering speed, heart rate, power, cadence,
-climbing and time, with optional heart-rate and power zone coloring driven by your Karoo
-`UserProfile`.
+instead of floating in the middle of it. 58 fields covering speed, heart rate, power, cadence,
+climbing, laps, navigation and time, with optional heart-rate and power zone coloring driven by
+your Karoo `UserProfile`.
 
 Numbers are set in **Saira** by default, with equal-width digits so a value does not shift
 sideways as its digits change, and an adjustable width and weight — narrower digits make the
@@ -41,13 +41,22 @@ All fields appear in the field picker under **BigNum**.
 **Cadence** — Cadence · Cadence - Avg · Cadence - Max
 
 **Power** — Power · Power - Zone · Power - 3s · Power - 5s · Power - 10s · Power - 30s ·
-Power - 20m · Power - 1hr · Power - Avg · Power - Max · Power - Normalized · Power - Lap Avg ·
+Power - 20m · Power - 1hr · Power - Avg · Power - Max · Power - Normalized ·
 Power - W/kg · Power - W/kg 3s · Power - W/kg 5s · Power - TSS · Power - Calories
 
 **Climbing** — Climb - Elevation · Climb - Ascent · Climb - Descent · Climb - Grade ·
 Climb - VAM · Climb - VAM Avg · Climb - Dist to Top · Climb - Elev to Top
 
+**Lap** — Lap - Number · Lap - Time · Lap - Distance · Lap - Speed · Lap - Max Speed ·
+Lap - HR · Lap - Cadence · Lap - Max Cadence · Lap - Avg Power · Lap - Normalized Power ·
+Lap - Max Power · Lap - W/kg · Lap - VAM · Lap - Ascent · Lap - Descent
+
+**Navigation** — Nav - To Destination · Nav - To Next Turn · Nav - ETA
+
 **Time & environment** — Time - Elapsed · Temperature
+
+The navigation fields need a route loaded; without one they sit at `--`. **Nav - ETA** is a wall
+clock in 24-hour form, drawn whole rather than with raised minutes.
 
 Speed, distance, elevation and temperature follow the metric/imperial preference from your Karoo
 profile. Power-to-weight and TSS use the rider weight and FTP from the same profile.
@@ -56,11 +65,12 @@ The Karoo reports plain W/kg itself, but has no smoothed equivalent, so **W/kg 3
 **W/kg 5s** are worked out here: smoothed power divided by the rider weight in your profile.
 Without a weight to divide by they show `--` rather than a number that would really be watts.
 
-### Elapsed time
+### Durations
 
-Ride time reads `h:mm:ss` throughout — `0:04:59` in the first hour, `0:00:00` before the ride
-starts — so the field never changes shape mid-ride. It is sized against a `0:00:00` template
-either way, so the leading hour costs no room.
+Ride time and lap time read `h:mm:ss` from one hour and `m:ss` below it — `4:59`, not `0:04:59`.
+The width budget follows the shape of the value, so on the fields where width is the binding
+constraint the shorter form is drawn appreciably taller. The clock steps down a size as it
+passes the hour; two glyphs of height for the first hour of every ride is the trade.
 
 With **Raised decimals** on, the seconds come out about half size and raised: `1:34:17` reads as
 a large **1:34** with a small `17` after it. Hours and minutes are what you read at a glance; the

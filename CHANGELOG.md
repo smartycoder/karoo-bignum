@@ -8,6 +8,30 @@ Karoo shows in its own update flow.
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-08-26
+
+### Added
+
+- **The lap set**, 14 fields: number, time, distance, speed, max speed, heart rate, cadence,
+  max cadence, normalized power, max power, W/kg, VAM, ascent and descent, all for the current
+  lap.
+- **Navigation**, 3 fields: distance to destination, distance to next turn, and ETA. They need
+  a route loaded and sit at `--` without one. ETA is a 24-hour wall clock, drawn whole rather
+  than with its minutes raised, so it does not read as a stopwatch.
+
+### Changed
+
+- Durations under an hour lose the leading `0:` and are sized against `mm:ss`, so the number is
+  drawn taller wherever width is what limits it.
+- A value wider than its width template now shrinks only if it is wider than the tile. Where
+  height is what limits the number -- most tiles -- a 4-digit power kept a quarter of its height
+  for a template it had already outgrown, with room to spare beside it.
+- **Power - Lap Avg** is now **Lap - Avg Power**, so it sits with the rest of the lap fields in
+  the picker. The field itself is unchanged and pages holding it are not affected.
+- Field labels are drawn in capitals and sized against a capital rather than against their own
+  ink, so every header has the same letter height and sits on one line. A label with a descender
+  ("TIME lap") used to come out a fifth shorter than one without ("HR").
+
 ## [1.1.0] - 2026-08-25
 
 ### Added

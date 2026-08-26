@@ -43,8 +43,8 @@
     <string name="df_power_20m_desc">20-minute smoothed power, zone-colored.</string>
     <string name="df_power_1hr">Power - 1hr</string>
     <string name="df_power_1hr_desc">1-hour smoothed power, zone-colored.</string>
-    <string name="df_lap_power">Power - Lap Avg</string>
-    <string name="df_lap_power_desc">Lap average power, zone-colored.</string>
+    <string name="df_lap_power">Lap - Avg Power</string>
+    <string name="df_lap_power_desc">Average power this lap, zone-colored.</string>
     <string name="df_avg_power">Power - Avg</string>
     <string name="df_avg_power_desc">Ride average power, zone-colored.</string>
     <string name="df_max_power">Power - Max</string>
@@ -103,4 +103,39 @@
 
     <string name="setting_test_mode">Test mode</string>
     <string name="setting_test_mode_desc">Show demo values in every field instead of live data. For screenshots and layout checks. Debug builds only.</string>
+
+    <string name="df_lap_number">Lap - Number</string>
+    <string name="df_lap_number_desc">Current lap number.</string>
+    <string name="df_lap_time">Lap - Time</string>
+    <string name="df_lap_time_desc">Time this lap, h:mm:ss.</string>
+    <string name="df_lap_distance">Lap - Distance</string>
+    <string name="df_lap_distance_desc">Distance covered this lap.</string>
+    <string name="df_lap_speed">Lap - Speed</string>
+    <string name="df_lap_speed_desc">Average speed this lap.</string>
+    <string name="df_lap_max_speed">Lap - Max Speed</string>
+    <string name="df_lap_max_speed_desc">Maximum speed this lap.</string>
+    <string name="df_lap_hr">Lap - HR</string>
+    <string name="df_lap_hr_desc">Average heart rate this lap, zone-colored.</string>
+    <string name="df_lap_cadence">Lap - Cadence</string>
+    <string name="df_lap_cadence_desc">Average cadence this lap.</string>
+    <string name="df_lap_max_cadence">Lap - Max Cadence</string>
+    <string name="df_lap_max_cadence_desc">Maximum cadence this lap.</string>
+    <string name="df_lap_np">Lap - Normalized Power</string>
+    <string name="df_lap_np_desc">Normalized power this lap, zone-colored.</string>
+    <string name="df_lap_max_power">Lap - Max Power</string>
+    <string name="df_lap_max_power_desc">Maximum power this lap, zone-colored.</string>
+    <string name="df_lap_w_kg">Lap - W/kg</string>
+    <string name="df_lap_w_kg_desc">Power to weight this lap in W/kg.</string>
+    <string name="df_lap_vam">Lap - VAM</string>
+    <string name="df_lap_vam_desc">Average rate of ascent this lap in m/h.</string>
+    <string name="df_lap_ascent">Lap - Ascent</string>
+    <string name="df_lap_ascent_desc">Elevation gained this lap.</string>
+    <string name="df_lap_descent">Lap - Descent</string>
+    <string name="df_lap_descent_desc">Elevation lost this lap.</string>
+    <string name="df_dist_to_dest">Nav - To Destination</string>
+    <string name="df_dist_to_dest_desc">Distance remaining to the destination.</string>
+    <string name="df_dist_to_turn">Nav - To Next Turn</string>
+    <string name="df_dist_to_turn_desc">Distance to the next turn.</string>
+    <string name="df_eta">Nav - ETA</string>
+    <string name="df_eta_desc">Estimated time of arrival, h:mm.</string>
 </resources>
