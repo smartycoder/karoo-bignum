@@ -6,6 +6,7 @@ import io.hammerhead.karooext.models.UserProfile.PreferredUnit.UnitType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.util.TimeZone
 
 class FormattersTest {
 
@@ -86,8 +87,8 @@ class FormattersTest {
     }
 
     // ── time (input MILLISECONDS) ──────────────────────────────────────────
-    @Test fun `time below 1 hour still carries its hour digit`() {
-        assertEquals("0:05:30" to "", Formatters.time(330_000.0, null))
+    @Test fun `time below 1 hour drops the leading hour`() {
+        assertEquals("5:30" to "", Formatters.time(330_000.0, null))
     }
 
     @Test fun `time at exactly 1 hour — h colon mm colon ss`() {
@@ -95,19 +96,39 @@ class FormattersTest {
     }
 
     @Test fun `time at 59999 ms shows as 0 colon 59`() {
-        assertEquals("0:00:59" to "", Formatters.time(59_999.0, null))
+        assertEquals("0:59" to "", Formatters.time(59_999.0, null))
     }
 
     @Test fun `time at 60000 ms shows as 1 colon 00`() {
-        assertEquals("0:01:00" to "", Formatters.time(60_000.0, null))
+        assertEquals("1:00" to "", Formatters.time(60_000.0, null))
+    }
+
+    @Test fun `the last second below the hour keeps the short form`() {
+        assertEquals("59:59" to "", Formatters.time(3_599_999.0, null))
     }
 
     @Test fun `a clock that has not started reads zero rather than dashes`() {
-        assertEquals("0:00:00" to "", Formatters.time(0.0, null))
+        assertEquals("0:00" to "", Formatters.time(0.0, null))
     }
 
     @Test fun `time at 12 hour 34 min 56 sec`() {
         assertEquals("12:34:56" to "", Formatters.time((12*3600 + 34*60 + 56) * 1000.0, null))
+    }
+
+    @Test fun `a negative reading is clamped rather than printed with a minus`() {
+        assertEquals("0:00" to "", Formatters.time(-5_000.0, null))
+    }
+
+    // The width budget has to follow the form the value is drawn in, or dropping the hour buys
+    // no height: the number is scaled against the template either way.
+    @Test fun `the budget for a short duration is minutes and seconds`() {
+        assertEquals("00:00", Formatters.timeTemplate("5:30"))
+        assertEquals("00:00", Formatters.timeTemplate("59:59"))
+    }
+
+    @Test fun `the budget for an hour or more carries the hour`() {
+        assertEquals("0:00:00", Formatters.timeTemplate("1:00:00"))
+        assertEquals("0:00:00", Formatters.timeTemplate("12:34:56"))
     }
 
     // Values that outgrow the field's width budget drop their decimal instead of being
@@ -168,5 +189,49 @@ class FormattersTest {
     @Test
     fun `zero watts is a real reading, not a missing one`() {
         assertEquals(0.0, Formatters.perKilogram(0.0, 70f)!!, 0.0001)
+    }
+    // ── clock (input: whatever TIME_OF_ARRIVAL turns out to carry) ─────────
+    @Test fun `clock reads an epoch in milliseconds as local time`() {
+        withUtc {
+            // 2026-08-26T14:35:00Z
+            assertEquals("14:35" to "", Formatters.clock(1_787_495_700_000.0, null))
+        }
+    }
+
+    @Test fun `clock reads an epoch in seconds as local time`() {
+        withUtc {
+            assertEquals("14:35" to "", Formatters.clock(1_787_495_700.0, null))
+        }
+    }
+
+    @Test fun `clock reads milliseconds into the day`() {
+        assertEquals("14:35" to "", Formatters.clock((14 * 3600 + 35 * 60) * 1000.0, null))
+    }
+
+    @Test fun `clock reads seconds into the day`() {
+        assertEquals("14:35" to "", Formatters.clock((14 * 3600 + 35 * 60).toDouble(), null))
+    }
+
+    @Test fun `clock keeps a single-digit hour to one digit`() {
+        assertEquals("7:05" to "", Formatters.clock((7 * 3600 + 5 * 60).toDouble(), null))
+    }
+
+    @Test fun `clock at midnight`() {
+        assertEquals("0:00" to "", Formatters.clock(0.0, null))
+    }
+
+    @Test fun `clock follows the device time zone`() {
+        withZone("Europe/Ljubljana") {
+            // The same instant as the epoch tests, two hours further east in August.
+            assertEquals("16:35" to "", Formatters.clock(1_787_495_700_000.0, null))
+        }
+    }
+
+    private fun withUtc(body: () -> Unit) = withZone("UTC", body)
+
+    private fun withZone(id: String, body: () -> Unit) {
+        val previous = TimeZone.getDefault()
+        TimeZone.setDefault(TimeZone.getTimeZone(id))
+        try { body() } finally { TimeZone.setDefault(previous) }
     }
 }

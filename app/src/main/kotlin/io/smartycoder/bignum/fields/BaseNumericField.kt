@@ -55,6 +55,30 @@ abstract class BaseNumericField(
      * wider still shrinks to fit.
      */
     open val widthTemplate: String = FieldRenderer.DEFAULT_WIDTH_TEMPLATE
+
+    /**
+     * The budget for one particular value, for a field whose values come in more than one shape.
+     * A duration is the case that needs it: below an hour it is drawn as m:ss, and scaling that
+     * against a h:mm:ss budget would give back the height dropping the hour just bought.
+     */
+    open fun widthBudget(text: String): String = widthTemplate
+
+    /**
+     * Which field of the data point carries the value, for a stream that ships more than one.
+     * Null takes whatever [io.hammerhead.karooext.models.DataPoint.singleValue] returns.
+     *
+     * The navigation types need it: each ships its distance alongside NAVIGATION_STATE, ON_ROUTE
+     * and REROUTING_ENABLED, and singleValue is `values.values.firstOrNull()` -- whichever of the
+     * four the map happens to hold first. Named, a missing value renders "--" instead of a route
+     * flag drawn as a distance.
+     */
+    open val valueField: String? = null
+
+    /**
+     * Whether the raised-tail setting applies to this field. Off for a wall clock: "14:35" would
+     * split into a big "14" and a small "35", which is how a stopwatch reads, not a time of day.
+     */
+    open val raisedTailAllowed: Boolean = true
     abstract val zoneKind: ZoneKind?
     abstract val format: (Double, PreferredUnit?) -> Pair<String, String>
     open val previewValue: Double = 0.0
@@ -119,8 +143,9 @@ abstract class BaseNumericField(
                 // each send -- ending in FAILED BINDER TRANSACTION or OOM after a long ride.
                 val views = RemoteViews(context.packageName, R.layout.numeric_field)
                 val visual = frame.visual
-                val (primary, secondary) = RaisedTail.split(visual.text, appearance.raisedTail)
-                val (tPrimary, tSecondary) = RaisedTail.template(widthTemplate, appearance.raisedTail)
+                val raised = appearance.raisedTail && raisedTailAllowed
+                val (primary, secondary) = RaisedTail.split(visual.text, raised)
+                val (tPrimary, tSecondary) = RaisedTail.template(widthBudget(visual.text), raised)
                 FieldRenderer.render(
                     context, views, config, label, iconRes,
                     tPrimary, tSecondary, primary, secondary, visual.color, appearance.font,
@@ -155,7 +180,9 @@ abstract class BaseNumericField(
             // Page editing keeps deferring to real data when there is any.
             testMode && demoInTestMode -> previewValue
             preview && state !is StreamState.Streaming -> previewValue
-            state is StreamState.Streaming -> state.dataPoint.singleValue
+            state is StreamState.Streaming -> state.dataPoint.let { point ->
+                valueField?.let { point.values[it] } ?: point.singleValue
+            }
             else -> null
         }
         if (raw == null) {

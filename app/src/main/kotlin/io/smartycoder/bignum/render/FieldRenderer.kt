@@ -63,6 +63,11 @@ object FieldRenderer {
     // the same on every field size instead of riding along with the number's scale factor.
     private const val LABEL_HEIGHT_DP = 11.07f
 
+    // What LABEL_HEIGHT_DP is measured against. A capital with flat top and bottom: "O" or "S"
+    // would carry the overshoot rounded glyphs are drawn with, and any label's own ink carries
+    // whatever ascenders, descenders and digits it happens to hold.
+    private const val CAP_REFERENCE = "H"
+
     // The header is always Oswald, whatever the number is set in. It is drawn at 11dp, where
     // the choices that make a face good for a big number stop paying: at that size Saira's
     // narrow widths lose the space between a label's words ("AVG VAM" reads as one), and its
@@ -222,6 +227,24 @@ object FieldRenderer {
         }
 
     /**
+     * How much a value has to shrink to fit the room it has, as a factor of the size the width
+     * template was fitted at. 1 leaves it alone.
+     *
+     * The room is the tile, not the template. The template is what holds a field's size steady
+     * as digits come and go, and while width is what limits the fit the two are the same number
+     * -- but once height is what limits it, the template is narrower than the tile, and
+     * measuring the overflow against it shrank values that had room to spare: a 4-digit power
+     * lost a quarter of its height on a tile with 66px of unused width beside it.
+     *
+     * Falls back to the template where that is the wider of the two, which is the degenerate
+     * tile [measure] clamps rather than fits.
+     */
+    internal fun shrinkFactor(naturalWidth: Float, templateWidth: Float, boxWidth: Int): Float {
+        val room = maxOf(templateWidth, boxWidth.toFloat())
+        return if (naturalWidth > room && naturalWidth > 0f) room / naturalWidth else 1f
+    }
+
+    /**
      * Baseline that centres ink of [inkHeight] (whose bounds start at [inkTop], negative above
      * the baseline) inside a box of [boxHeight].
      *
@@ -297,7 +320,6 @@ object FieldRenderer {
             ?: return
         numberPaint.textSize = metrics.textSize
         secondaryPaint.textSize = metrics.textSize * SECONDARY_SCALE
-        val w = metrics.width
         val h = metrics.height
         var digitTop = metrics.digitTop
         // Tracked separately from the box height h: a shrunk value has less ink than the box,
@@ -309,11 +331,11 @@ object FieldRenderer {
         var primaryWidth = numberPaint.measureText(primary)
         var secondaryWidth = secondaryPaint.measureText(secondary)
 
-        // Values wider than the template (a ride past ten hours, 4-digit power) shrink to fit.
-        // Both parts shrink by the same factor so their size relationship is unchanged.
+        // Values wider than the room they have (a ride past ten hours, 4-digit power) shrink to
+        // fit. Both parts shrink by the same factor so their size relationship is unchanged.
         val naturalWidth = primaryWidth + secondaryWidth
-        if (naturalWidth > metrics.templateWidth) {
-            val factor = metrics.templateWidth / naturalWidth
+        val factor = shrinkFactor(naturalWidth, metrics.templateWidth, boxWidth)
+        if (factor < 1f) {
             numberPaint.textSize = metrics.textSize * factor
             secondaryPaint.textSize = metrics.textSize * SECONDARY_SCALE * factor
             val shrunk = Rect()
@@ -327,6 +349,12 @@ object FieldRenderer {
         // A wedge cuts diagonally across the tile, so a single contrast threshold that flips the
         // whole number black-on-white cannot work -- only part of the number crosses it. An
         // outline in the contrasting colour survives regardless of where the wedge's edge falls.
+        // Wide enough for whatever the value came out as. Narrower values keep the template's
+        // width, which is what holds their on-screen size steady as digits come and go; a value
+        // that outgrew the template and was left unshrunk needs the room it actually takes, or
+        // the alignment would push its leading digits off the bitmap.
+        val w = maxOf(metrics.width, ceil(primaryWidth + secondaryWidth).toInt())
+
         val outlineColor = wedge?.let { ZoneColors.onColor(primaryColor) }
 
         // Room for that outline. The box is exactly the digits' ink, so a stroke centred on the
@@ -484,7 +512,7 @@ object FieldRenderer {
      * gravity puts it at the same edge as the number. Sizing it to [ViewConfig.viewSize] instead
      * would inherit that value's inaccuracy as a visible offset or a clipped label.
      */
-    private fun renderHeader(
+    internal fun renderHeader(
         context: Context,
         label: String,
         iconRes: Int,
@@ -504,15 +532,20 @@ object FieldRenderer {
             isSubpixelText = true
             textSize = labelHeight
         }
+        // Measured on a capital rather than on the label, and the label drawn in capitals.
+        // Scaling each label's own ink to the target made the size depend on which glyphs it
+        // happened to contain: "TIME lap" reaches from the cap line to the "p"'s tail, so its
+        // capitals came out a fifth shorter than "HR"'s to keep the whole ink at 11dp, and
+        // centring that taller ink pushed them off the line every other label sat on.
         val bounds = Rect()
-        paint.getTextBounds(label, 0, label.length, bounds)
+        paint.getTextBounds(CAP_REFERENCE, 0, CAP_REFERENCE.length, bounds)
         if (bounds.height() > 0) {
-            // Scale so the label's ink height, not its nominal text size, matches the target.
             paint.textSize = labelHeight * labelHeight / bounds.height()
-            paint.getTextBounds(label, 0, label.length, bounds)
+            paint.getTextBounds(CAP_REFERENCE, 0, CAP_REFERENCE.length, bounds)
         }
 
-        val labelWidth = paint.measureText(label)
+        val text = label.uppercase()
+        val labelWidth = paint.measureText(text)
         val contentWidth = iconSize + iconGap + labelWidth
         val w = (contentWidth + 2 * padding).toInt()
         val h = (maxOf(iconSize.toFloat(), labelHeight) + 2 * padding).toInt()
@@ -533,7 +566,7 @@ object FieldRenderer {
         val outlineColor = if (outline) ZoneColors.onColor(labelColor) else null
         drawOutlined(
             canvas,
-            label,
+            text,
             left + iconSize + iconGap,
             (h - bounds.height()) / 2f - bounds.top,
             paint,

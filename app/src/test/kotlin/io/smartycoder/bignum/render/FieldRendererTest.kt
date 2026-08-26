@@ -49,4 +49,36 @@ class FieldRendererTest {
         assertEquals(24f, above, 0.001f)
         assertEquals(above, below, 0.001f)
     }
+    // ── shrinkFactor ───────────────────────────────────────────────────────
+    // The template holds a field's size steady as digits come and go, but it is narrower than
+    // the tile whenever height is what limited the fit. Measuring overflow against it shrank
+    // values that had room to spare.
+    @Test
+    fun `a value inside its template is left alone`() {
+        assertEquals(1f, FieldRenderer.shrinkFactor(140f, 157f, 220), 0.0001f)
+    }
+
+    @Test
+    fun `a value past its template but inside the tile is left alone`() {
+        // 4-digit power on a tile where height is what limits the number: 209px of value,
+        // a 157px template, and 220px of room.
+        assertEquals(1f, FieldRenderer.shrinkFactor(209f, 157f, 220), 0.0001f)
+    }
+
+    @Test
+    fun `a value past the tile shrinks to the tile`() {
+        assertEquals(220f / 293f, FieldRenderer.shrinkFactor(293f, 220f, 220), 0.0001f)
+    }
+
+    @Test
+    fun `a template wider than the tile is what the value is held to`() {
+        // measure() clamps rather than fits when a tile is degenerate, and then the template is
+        // the wider of the two; shrinking to the tile there would be a second, harsher clamp.
+        assertEquals(240f / 300f, FieldRenderer.shrinkFactor(300f, 240f, 100), 0.0001f)
+    }
+
+    @Test
+    fun `a value with no width asks for no shrinking`() {
+        assertEquals(1f, FieldRenderer.shrinkFactor(0f, 157f, 220), 0.0001f)
+    }
 }

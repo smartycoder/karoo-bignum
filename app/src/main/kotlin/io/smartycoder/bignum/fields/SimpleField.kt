@@ -20,6 +20,8 @@ class SimpleField(
     override val zoneKind: ZoneKind? = null,
     override val previewValue: Double = 0.0,
     override val widthTemplate: String = FieldRenderer.DEFAULT_WIDTH_TEMPLATE,
+    override val valueField: String? = null,
+    override val raisedTailAllowed: Boolean = true,
     private val needsProfile: Boolean = false,
 ) : BaseNumericField(extension, typeId, karoo) {
     override fun formatNeedsProfile() = needsProfile

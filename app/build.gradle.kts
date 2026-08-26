@@ -21,8 +21,8 @@ android {
         applicationId = "io.smartycoder.bignum"
         minSdk = 29
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.1.0"
+        versionCode = 4
+        versionName = "1.2.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -60,6 +60,7 @@ android {
 
     sourceSets["main"].kotlin.srcDirs("src/main/kotlin")
     sourceSets["test"].kotlin.srcDirs("src/test/kotlin")
+    sourceSets["androidTest"].kotlin.srcDirs("src/androidTest/kotlin")
 
     testOptions {
         unitTests.isReturnDefaultValues = true
@@ -72,4 +73,9 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+
+    // The header's type sizing is decided by real font metrics, which a JVM unit test cannot
+    // see -- unitTests.isReturnDefaultValues hands back an empty Rect. It runs on the Karoo.
+    androidTestImplementation(libs.androidx.test.junit)
+    androidTestImplementation(libs.androidx.test.runner)
 }
