@@ -8,6 +8,15 @@ Karoo shows in its own update flow.
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-08-27
+
+### Fixed
+
+- `minSdk` is 26 rather than 29, so BigNum installs on the Karoo 2. The Karoo 2 runs Android 8.1
+  (API 27) and goes no further, and nothing here ever needed API 29 -- `getFont()` and
+  `fontVariationSettings`, the newest calls in the renderer, are both API 26. Verified on a
+  Karoo 2: the extension connects and the fields render.
+
 ## [1.2.0] - 2026-08-26
 
 ### Added

@@ -3,11 +3,11 @@
   "packageName": "io.smartycoder.bignum",
   "iconUrl": "https://github.com/smartycoder/karoo-bignum/raw/main/docs/icon.png",
   "latestApkUrl": "https://github.com/smartycoder/karoo-bignum/releases/latest/download/app-release.apk",
-  "latestVersion": "1.2.0",
-  "latestVersionCode": 4,
+  "latestVersion": "1.2.1",
+  "latestVersionCode": 5,
   "developer": "smartycoder",
   "description": "Large, bold numeric data fields with optional HR and power zone coloring.",
-  "releaseNotes": "17 new fields: the lap set (number, time, distance, speed, max speed, heart rate, cadence, max cadence, normalized power, max power, W/kg, VAM, ascent, descent) and navigation (distance to destination, distance to next turn, ETA). Durations under an hour drop the leading 0: and are drawn taller. A value that outgrows its width template now shrinks only if it is wider than the tile, so a 4-digit power keeps its height. Field labels are drawn in capitals, all at the same letter height and on one line.",
+  "releaseNotes": "Installs on the Karoo 2 again: the minimum Android version was set higher than anything in the app actually needs. No change to the fields themselves.",
   "tags": [
     "datafield",
     "numeric"

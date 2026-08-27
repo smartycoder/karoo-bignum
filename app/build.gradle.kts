@@ -19,10 +19,12 @@ android {
 
     defaultConfig {
         applicationId = "io.smartycoder.bignum"
-        minSdk = 29
+        // 26, not 29: the Karoo 2 runs Android 8.1 (API 27) and never goes further, and
+        // nothing here needs more -- getFont() and fontVariationSettings are both API 26.
+        minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.2.0"
+        versionCode = 5
+        versionName = "1.2.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
