@@ -16,8 +16,17 @@ import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.Switch
 import android.widget.TextView
+import io.hammerhead.karooext.KarooSystemService
+import io.smartycoder.bignum.fields.FieldCatalog
+import io.smartycoder.bignum.fields.ids
 
 class MainActivity : Activity() {
+
+    // Labels only, and applicationContext to match BigNumExtension.onCreate: nothing here
+    // connects -- KarooSystemService's constructor only allocates, it binds nothing until
+    // connect() -- but an Activity handed to 58 long-lived field objects is a leak waiting
+    // for the SDK to change.
+    private val catalog by lazy { FieldCatalog.build("bignum", KarooSystemService(applicationContext)) }
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
@@ -40,15 +49,137 @@ class MainActivity : Activity() {
             }
         }
 
+    /**
+     * Every section's content view and chevron, so opening one can close the others. Cleared at
+     * the top of [onCreate]: a re-created Activity builds fresh views, and a stale entry here
+     * would leave the accordion collapsing a view that is no longer on screen.
+     */
+    private val openSections = mutableListOf<Pair<View, TextView>>()
+
+    /**
+     * A collapsible card in Barberfish's `CollapsibleSection` shape -- white background, 1dp
+     * grey border, 6dp corners, a tappable header (icon, uppercase title, description, chevron)
+     * and a content area shown or hidden on tap -- rebuilt with plain views because BigNum has
+     * no Compose dependency to draw on and must not gain one.
+     *
+     * Sections behave as one accordion through [openSections]: opening any card closes the rest.
+     * The state is in memory only -- the Karoo does not rotate, so there is nothing to restore
+     * across a re-create and no preference key is worth adding just to remember which card the
+     * rider left open.
+     */
+    private fun section(
+        title: String,
+        description: String,
+        iconRes: Int,
+        expandedInitially: Boolean,
+        vararg content: View,
+    ): View {
+
+        val icon = ImageView(this).apply {
+            setImageResource(iconRes)
+            // Decorative: the title text right beside it already names the section.
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }
+
+        val titleView = TextView(this).apply {
+            text = title
+            textSize = 14f
+            isAllCaps = true
+            setTypeface(typeface, Typeface.BOLD)
+        }
+
+        val descriptionView = TextView(this).apply {
+            text = description
+            textSize = 12f
+        }
+
+        // The icon sits on the title's row, and the description runs beneath BOTH of them rather
+        // than being indented under the title alone. That is how Barberfish's sections read, and
+        // the flush left edge is what makes a description look like the section's subtitle
+        // instead of a second line of the title.
+        val titleRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            addView(icon, LinearLayout.LayoutParams(dp(20), dp(20)))
+            addView(titleView, LinearLayout.LayoutParams(WRAP, WRAP).apply { marginStart = dp(12) })
+        }
+
+        val headerText = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(titleRow)
+            addView(descriptionView, LinearLayout.LayoutParams(MATCH, WRAP).apply { topMargin = dp(2) })
+        }
+
+        // Small triangles rather than a drawable: a chevron is two glyphs (open/closed) and a
+        // TextView swap is simpler than a rotating ImageView for a project with no vector asset
+        // for it yet.
+        val chevron = TextView(this).apply {
+            textSize = 16f
+            text = if (expandedInitially) EXPANDED_CHEVRON else COLLAPSED_CHEVRON
+        }
+
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(8), dp(10), dp(8), dp(10))
+            isClickable = true
+            addView(headerText, LinearLayout.LayoutParams(0, WRAP, 1f))
+            addView(chevron)
+        }
+
+        val body = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            visibility = if (expandedInitially) View.VISIBLE else View.GONE
+            setPadding(dp(8), 0, dp(8), dp(8))
+            content.forEach { addView(it) }
+        }
+
+        openSections += body to chevron
+
+        header.setOnClickListener {
+            // One section open at a time: close every section, then reopen this one unless it
+            // was the one already open. Tapping the open section therefore closes it and leaves
+            // the screen showing three headers, which is the state a rider scans from.
+            val opening = body.visibility != View.VISIBLE
+            openSections.forEach { (otherBody, otherChevron) ->
+                otherBody.visibility = View.GONE
+                otherChevron.text = COLLAPSED_CHEVRON
+            }
+            if (opening) {
+                body.visibility = View.VISIBLE
+                chevron.text = EXPANDED_CHEVRON
+            }
+        }
+
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = GradientDrawable().apply {
+                setColor(Color.WHITE)
+                cornerRadius = dp(6).toFloat()
+                setStroke(dp(1), SECTION_BORDER_GREY)
+            }
+            addView(header, LinearLayout.LayoutParams(MATCH, WRAP))
+            addView(body, LinearLayout.LayoutParams(MATCH, WRAP))
+        }
+    }
+
     private companion object {
         /** Sampled off the Karoo's own app-store card, so ours sits beside it as a match. */
         const val KAROO_ALERT_YELLOW = 0xFFFFE900.toInt()
+
+        /** A light, neutral border -- matches the weight of Barberfish's card outline. */
+        const val SECTION_BORDER_GREY = 0xFFDDDDDD.toInt()
+        const val EXPANDED_CHEVRON = "▾"
+        const val COLLAPSED_CHEVRON = "▸"
         const val MATCH = LinearLayout.LayoutParams.MATCH_PARENT
         const val WRAP = LinearLayout.LayoutParams.WRAP_CONTENT
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Every view below is built fresh; anything left from a previous instance would have the
+        // accordion reaching for views that are no longer on screen.
+        openSections.clear()
 
         // Shaped like the cards the Karoo puts at the top of its own screens: a rounded yellow
         // panel with a circled mark, a short heading and the text below. The mark is an "i" and
@@ -98,6 +229,47 @@ class MainActivity : Activity() {
             addView(hintBody)
         }
 
+        val hudLeftLabel = TextView(this).apply {
+            text = getString(R.string.hud_slot_left)
+            textSize = 18f
+            setPadding(0, dp(14), 0, 0)
+        }
+
+        val hudLabels = catalog.map { it.label }
+        val hudTypeIds = catalog.map { it.typeId }
+
+        // One mutable pair shared by both spinners, not two independent `var`s: setSelection
+        // fires onItemSelected during construction, so both spinners call back before onCreate
+        // returns, and two callbacks each closing over the other's initial value would write a
+        // stale pair. Each callback below updates only its own half of this pair, then writes
+        // the whole thing, the same shape as `var setting = Settings.fontSetting(this)` above.
+        var slots = Settings.hudSlots(this, catalog.ids)
+
+        val hudLeft = spinner(hudLabels, indexOrZero(hudTypeIds, slots.first)) {
+            slots = slots.copy(first = catalog[it].typeId)
+            Settings.setHudSlots(this, slots.first, slots.second)
+        }
+
+        val hudRightLabel = TextView(this).apply {
+            text = getString(R.string.hud_slot_right)
+            textSize = 18f
+            setPadding(0, dp(14), 0, 0)
+        }
+
+        val hudRight = spinner(hudLabels, indexOrZero(hudTypeIds, slots.second)) {
+            slots = slots.copy(second = catalog[it].typeId)
+            Settings.setHudSlots(this, slots.first, slots.second)
+        }
+
+        val hudNote = TextView(this).apply {
+            text = getString(R.string.hud_desc)
+            textSize = 13f
+            setPadding(0, dp(7), 0, 0)
+        }
+
+        // No top padding here: this used to sit mid-list and needed a gap above it, but it is
+        // now the first control in the GLOBAL section, and the section card's own header
+        // already separates it from whatever is above -- the old dp(20) just doubled that gap.
         val zoneColorsLabel = TextView(this).apply {
             text = getString(R.string.setting_zone_colors)
             textSize = 18f
@@ -223,29 +395,49 @@ class MainActivity : Activity() {
             setPadding(0, dp(7), 0, 0)
         }
 
+        // Debug builds only, appended into GLOBAL below. Plausible-but-false power and heart
+        // rate are worth keeping out of a rider's reach; this exists to shoot screenshots and
+        // to look at field layout without a ride.
+        val globalContent = mutableListOf(zoneColorsLabel, zoneColors, note).apply {
+            if (BuildConfig.DEBUG) {
+                add(testMode)
+                add(testModeNote)
+            }
+        }
+
+        // HUD is expanded by default because it is the only section that configures one
+        // specific field, so it sits last, after the two that apply to every field. It is still
+        // the one card open on arrival: only one section is open at a time, and an accordion that
+        // opens on nothing gives a rider no sense of what a card contains until they tap one.
+        val hudSection = section(
+            getString(R.string.hud_section),
+            getString(R.string.section_hud_desc),
+            R.drawable.ic_bignum,
+            true,
+            hudLeftLabel, hudLeft, hudRightLabel, hudRight, hudNote,
+        )
+        val appearanceSection = section(
+            getString(R.string.section_appearance),
+            getString(R.string.section_appearance_desc),
+            R.drawable.ic_appearance,
+            false,
+            fontLabel, font, widthLabel, width, weightLabel, weight, fontNote, raisedTail, raisedTailNote,
+        )
+        val globalSection = section(
+            getString(R.string.section_global),
+            getString(R.string.section_global_desc),
+            R.drawable.ic_global,
+            false,
+            *globalContent.toTypedArray(),
+        )
+
         val controls = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            // Inset past the card, which sits at the edge the Karoo puts its own cards at.
-            setPadding(dp(8), 0, dp(8), 0)
-            addView(zoneColorsLabel)
-            addView(zoneColors)
-            addView(note)
-            addView(fontLabel)
-            addView(font)
-            addView(widthLabel)
-            addView(width)
-            addView(weightLabel)
-            addView(weight)
-            addView(fontNote)
-            addView(raisedTail)
-            addView(raisedTailNote)
-            // Debug builds only. Plausible-but-false power and heart rate are worth
-            // keeping out of a rider's reach; this exists to shoot screenshots and to
-            // look at field layout without a ride.
-            if (BuildConfig.DEBUG) {
-                addView(testMode)
-                addView(testModeNote)
-            }
+            // 6dp around the list of cards, 8dp between them, matching Barberfish's spacing.
+            setPadding(dp(6), dp(6), dp(6), dp(6))
+            addView(appearanceSection, LinearLayout.LayoutParams(MATCH, WRAP).apply { bottomMargin = dp(8) })
+            addView(globalSection, LinearLayout.LayoutParams(MATCH, WRAP).apply { bottomMargin = dp(8) })
+            addView(hudSection, LinearLayout.LayoutParams(MATCH, WRAP))
         }
 
         val content = LinearLayout(this).apply {
@@ -261,3 +453,13 @@ class MainActivity : Activity() {
         setContentView(ScrollView(this).apply { addView(content) })
     }
 }
+
+/**
+ * Position of [id] in [typeIds], or 0 if it is not there.
+ *
+ * Pulled out of onCreate as a top-level function so this one branch is testable without a
+ * Context: [Settings.hudSlots] already resolves its result against catalog.ids, so [id] should
+ * always be found, but if a resolved id ever were missing anyway, `indexOf` returning -1
+ * into `Spinner.setSelection` would show an empty spinner instead of a chosen field.
+ */
+internal fun indexOrZero(typeIds: List<String>, id: String): Int = typeIds.indexOf(id).coerceAtLeast(0)

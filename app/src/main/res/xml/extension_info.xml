@@ -79,4 +79,7 @@
     <!-- Time and environment -->
     <DataType displayName="@string/df_elapsed"   graphical="true" icon="@drawable/ic_clock" typeId="elapsed"     description="@string/df_elapsed_desc"/>
     <DataType displayName="@string/df_temp"      graphical="true" icon="@drawable/ic_temp" typeId="temp"        description="@string/df_temp_desc"/>
+
+    <!-- Composite -->
+    <DataType displayName="@string/df_hud" graphical="true" icon="@drawable/ic_bignum" typeId="hud" description="@string/df_hud_desc"/>
 </ExtensionInfo>

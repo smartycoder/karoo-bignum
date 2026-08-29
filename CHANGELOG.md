@@ -8,6 +8,19 @@ Karoo shows in its own update flow.
 
 ## [Unreleased]
 
+### Added
+
+- **HUD**, one field that shows two others side by side in a single tile. Each half draws a
+  whole BigNum field -- its own header, zone colour, grade wedge and typeface -- and the two
+  are separated by a hairline. Pick what each half shows in the BigNum app; any of the other
+  58 fields will do, the same one twice included. A half whose sensor drops out recovers on
+  its own without taking the other half with it.
+
+### Changed
+
+- The settings screen is grouped into collapsible sections -- Appearance, Global and HUD --
+  rather than one flat scroll, and one section is open at a time.
+
 ## [1.2.1] - 2026-08-27
 
 ### Fixed

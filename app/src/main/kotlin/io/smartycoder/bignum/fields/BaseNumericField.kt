@@ -4,6 +4,7 @@ import android.content.Context
 import android.widget.RemoteViews
 import io.smartycoder.bignum.R
 import io.smartycoder.bignum.Settings
+import io.smartycoder.bignum.Appearance
 import io.smartycoder.bignum.format.RaisedTail
 import io.smartycoder.bignum.ZoneColorMode
 import io.smartycoder.bignum.consumerFlow
@@ -24,6 +25,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
@@ -38,7 +40,11 @@ data class Wedge(val fraction: Float, val color: Int, val rising: Boolean)
 abstract class BaseNumericField(
     extension: String,
     typeId: String,
-    private val karoo: KarooSystemService,
+    // Nullable only so ComputeTest can build a throwaway subclass in a plain JVM test: this
+    // project has no Robolectric, so there is no live Context to hand a real KarooSystemService,
+    // and compute() -- the one thing that test drives -- never touches this field anyway. Every
+    // real field always constructs with a non-null instance; see the `!!` uses in frameFlow.
+    private val karoo: KarooSystemService?,
 ) : DataTypeImpl(extension, typeId) {
 
     abstract val upstreamTypeId: String
@@ -102,71 +108,93 @@ abstract class BaseNumericField(
     /** Wedge behind the number for this field's [raw] value. Null for every field but Grade. */
     open fun wedge(raw: Double): Wedge? = null
 
-    final override fun startView(
-        context: Context,
-        config: ViewConfig,
-        emitter: ViewEmitter,
-    ) {
-        val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-
+    final override fun startView(context: Context, config: ViewConfig, emitter: ViewEmitter) {
         // We draw the icon and label ourselves, so Karoo's header would only duplicate them
         // and eat the top of the tile.
         emitter.onNext(UpdateGraphicConfig(showHeader = false))
-
-        val needsProfile = zoneKind != null || formatNeedsProfile()
-        val dataFlow = karoo.streamDataFlow(upstreamTypeId)
-        val profileFlow = if (needsProfile) karoo.consumerFlow<UserProfile>() else flowOf<UserProfile?>(null)
-
+        val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+        // Registered before launch: if setCancellable ran after and the emitter were torn down
+        // in the gap, there would be no way to stop the collector this scope is about to start.
+        emitter.setCancellable { scope.cancel() }
         scope.launch {
-            combine(
-                dataFlow,
-                profileFlow,
-                Settings.zoneColorModeFlow(context),
-                Settings.testModeFlow(context),
-                Settings.appearanceFlow(context),
-            ) { state, profile, mode, testMode, appearance ->
-                // Carried alongside the frame rather than inside it: appearance decides how the
-                // value is drawn, not what the value is, and compute() returns from a dozen
-                // places that have no business knowing about typefaces.
-                compute(state, profile, config.preview, testMode, mode, Theme.textColor(context)) to appearance
-            }
-                // Karoo sends a sample whether or not the value moved, and most fields sit still
-                // for long stretches -- an average, a maximum, a total, a temperature. Without
-                // this each of those samples draws a bitmap identical to the one already on
-                // screen and ships it across a process boundary to change nothing. Frame, Visual,
-                // Wedge and Appearance are all data classes, so equality compares what is drawn.
-                .distinctUntilChanged()
-                .collect { (frame, appearance) ->
+            frameFlow(context, config.preview).collect { (frame, appearance) ->
                 // A fresh RemoteViews per update, never a reused one: RemoteViews is an
                 // append-only list of actions with no way to clear it, so reusing the instance
                 // would retain every bitmap ever set and re-serialize the whole growing list on
                 // each send -- ending in FAILED BINDER TRANSACTION or OOM after a long ride.
                 val views = RemoteViews(context.packageName, R.layout.numeric_field)
-                val visual = frame.visual
-                val raised = appearance.raisedTail && raisedTailAllowed
-                val (primary, secondary) = RaisedTail.split(visual.text, raised)
-                val (tPrimary, tSecondary) = RaisedTail.template(widthBudget(visual.text), raised)
-                FieldRenderer.render(
-                    context, views, config, label, iconRes,
-                    tPrimary, tSecondary, primary, secondary, visual.color, appearance.font,
-                    visual.background, frame.wedge,
-                )
+                renderInto(context, views, config, frame, appearance)
                 emitter.updateView(views)
             }
         }
-        emitter.setCancellable { scope.cancel() }
+    }
+
+    /**
+     * The value half of [startView]: today's sample plus the settings that decide how it is
+     * drawn, collapsed into one (frame, appearance) update. Split out from the drawing half so
+     * the HUD field can drive several of these at once, one per slot, without duplicating the
+     * combine/compute wiring.
+     */
+    internal fun frameFlow(context: Context, preview: Boolean): Flow<Pair<Frame, Appearance>> {
+        val needsProfile = zoneKind != null || formatNeedsProfile()
+        val dataFlow = karoo!!.streamDataFlow(upstreamTypeId)
+        val profileFlow = if (needsProfile) karoo.consumerFlow<UserProfile>() else flowOf<UserProfile?>(null)
+
+        return combine(
+            dataFlow,
+            profileFlow,
+            Settings.zoneColorModeFlow(context),
+            Settings.testModeFlow(context),
+            Settings.appearanceFlow(context),
+        ) { state, profile, mode, testMode, appearance ->
+            // Carried alongside the frame rather than inside it: appearance decides how the
+            // value is drawn, not what the value is, and compute() returns from a dozen
+            // places that have no business knowing about typefaces.
+            compute(state, profile, preview, testMode, mode, Theme.textColor(context)) to appearance
+        }
+            // Karoo sends a sample whether or not the value moved, and most fields sit still
+            // for long stretches -- an average, a maximum, a total, a temperature. Without
+            // this each of those samples draws a bitmap identical to the one already on
+            // screen and ships it across a process boundary to change nothing. Frame, Visual,
+            // Wedge and Appearance are all data classes, so equality compares what is drawn.
+            .distinctUntilChanged()
+    }
+
+    /**
+     * The drawing half of [startView]: turns one (frame, appearance) update into the actions on
+     * [views]. [inSlot] is true when this field is one tile among several sharing a single
+     * `numeric_field.xml`, as the HUD field does -- see [FieldRenderer.render]'s `roundCorners`.
+     */
+    internal fun renderInto(
+        context: Context,
+        views: RemoteViews,
+        config: ViewConfig,
+        frame: Frame,
+        appearance: Appearance,
+        inSlot: Boolean = false,
+    ) {
+        val visual = frame.visual
+        val raised = appearance.raisedTail && raisedTailAllowed
+        val (primary, secondary) = RaisedTail.split(visual.text, raised)
+        val (tPrimary, tSecondary) = RaisedTail.template(widthBudget(visual.text), raised)
+        FieldRenderer.render(
+            context, views, config, label, iconRes,
+            tPrimary, tSecondary, primary, secondary, visual.color, appearance.font,
+            visual.background, frame.wedge,
+            roundCorners = !inSlot,
+        )
     }
 
     /**
      * What one update puts on screen. [background] is null unless the field is filled with its
      * zone colour, in which case [color] is the contrasting ink for that fill.
      */
-    private data class Visual(val text: String, val color: Int, val background: Int?)
+    internal data class Visual(val text: String, val color: Int, val background: Int?)
 
     /** One update's worth of drawing: the number/fill and the wedge behind it, if any. */
-    private data class Frame(val visual: Visual, val wedge: Wedge?)
+    internal data class Frame(val visual: Visual, val wedge: Wedge?)
 
-    private fun compute(
+    internal fun compute(
         state: StreamState,
         profile: UserProfile?,
         preview: Boolean,
@@ -210,4 +238,20 @@ abstract class BaseNumericField(
             else -> Frame(Visual(text, zone, null), wedgeValue)
         }
     }
+
+    /**
+     * What this field draws with no value at all -- the same path compute() takes for absent
+     * data. A composite field like HudField needs to draw a slot before that slot's stream has
+     * produced anything, and it must draw what the field itself would draw (a formatted
+     * missingValue such as "0.0" for speed/power/time, or "--" where no missingValue is
+     * defined), not a stand-in that only some fields would actually show.
+     */
+    internal fun missingFrame(context: Context): Frame = compute(
+        StreamState.Idle,
+        profile = null,
+        preview = false,
+        testMode = false,
+        mode = ZoneColorMode.OFF,
+        defaultColor = Theme.textColor(context),
+    )
 }

@@ -87,6 +87,20 @@
     <string name="df_dist_to_top_desc">Distance remaining to the top of the climb.</string>
     <string name="df_elev_to_top">Climb - Elev to Top</string>
     <string name="df_elev_to_top_desc">Elevation remaining to the top of the climb.</string>
+    <string name="hud_section">HUD field</string>
+    <string name="hud_slot_left">Left</string>
+    <string name="hud_slot_right">Right</string>
+    <string name="hud_desc">Choose what the HUD field shows in each half. The settings below apply to every field.</string>
+
+    <!-- Section card titles and descriptions for the settings screen. Titles are rendered
+         uppercase in code (isAllCaps), so these stay mixed-case here, matching how hud_section
+         is written. -->
+    <string name="section_hud_desc">Configure the two-field HUD tile</string>
+    <string name="section_appearance">Appearance</string>
+    <string name="section_appearance_desc">Typeface and how numbers are drawn</string>
+    <string name="section_global">Global</string>
+    <string name="section_global_desc">Colors shared across every data field</string>
+
     <string name="setting_zone_colors">Zone colors</string>
     <string name="setting_zone_mode_off">Off</string>
     <string name="setting_zone_mode_text">Number</string>
@@ -138,4 +152,6 @@
     <string name="df_dist_to_turn_desc">Distance to the next turn.</string>
     <string name="df_eta">Nav - ETA</string>
     <string name="df_eta_desc">Estimated time of arrival, h:mm.</string>
+    <string name="df_hud">HUD - Two Fields</string>
+    <string name="df_hud_desc">Two BigNum fields side by side in one tile.</string>
 </resources>

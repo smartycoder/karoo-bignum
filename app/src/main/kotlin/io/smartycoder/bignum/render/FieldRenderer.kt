@@ -285,6 +285,13 @@ object FieldRenderer {
         backgroundColor: Int? = null,
         /** Coloured wedge drawn behind the number, or null for every field but Grade. */
         wedge: Wedge? = null,
+        /**
+         * False when this call draws one slot of a composite tile (the HUD field) rather than a
+         * whole Karoo card. Each slot is a full numeric_field.xml, so rounding it here as well as
+         * Karoo rounding the card outside would draw two nested rounded corners -- and a Grade
+         * wedge, which reaches edge to edge, would get clipped by the inner one.
+         */
+        roundCorners: Boolean = true,
     ) {
         // The header comes first because the number's box is what it leaves behind. It is cached
         // and depends on nothing the number does, so this is a reorder rather than extra work.
@@ -437,10 +444,14 @@ object FieldRenderer {
         views.setInt(R.id.root, "setBackgroundColor", backgroundColor ?: Color.TRANSPARENT)
         // Karoo does NOT clip this view to its rounded card -- measured on a Karoo 3 ride
         // page, where a fill came out with square corners sitting over the rounded card. So
-        // the rounding is ours to do, everywhere and not just in the page editor.
+        // the rounding is ours to do, everywhere and not just in the page editor. Except when
+        // roundCorners is false: each slot of the HUD field is a whole numeric_field.xml sitting
+        // inside Karoo's one card, so rounding it too would draw two nested rounded cards, and a
+        // Grade wedge -- which reaches its slot's own edges -- would get clipped at the inner
+        // corners it was never meant to have.
         // setViewOutlinePreferredRadius is API 31; minSdk here is 29, Karoo 3 runs 33, so on
         // anything older the fill simply stays square.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (roundCorners && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             views.setViewOutlinePreferredRadius(R.id.root, CARD_RADIUS_DP, TypedValue.COMPLEX_UNIT_DIP)
             views.setBoolean(R.id.root, "setClipToOutline", true)
         }

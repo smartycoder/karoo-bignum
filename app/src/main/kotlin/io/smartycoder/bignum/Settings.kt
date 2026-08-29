@@ -81,6 +81,8 @@ object Settings {
     private const val KEY_FONT_WIDTH = "font_width"
     private const val KEY_FONT_WEIGHT = "font_weight"
     private const val KEY_RAISED_TAIL = "raised_decimals"
+    private const val KEY_HUD_LEFT = "hud_slot_left"     // e.g. "speed"
+    private const val KEY_HUD_RIGHT = "hud_slot_right"   // e.g. "hr"
 
     /** Saira's axis ranges; anything read back from preferences is clamped into them. */
     private val WIDTH_RANGE = 50..125
@@ -97,6 +99,9 @@ object Settings {
 
     /** What a fresh install draws with. Internal so a test can hold it to that. */
     internal val DEFAULT_FONT = FontSetting(NumberFont.SAIRA, width = 50, weight = 700)
+
+    /** What a fresh install's HUD field shows in each slot. Internal so a test can hold it to that. */
+    internal val DEFAULT_SLOTS = "speed" to "hr"
 
     /** Replaced by [KEY_ZONE_COLOR_MODE]; still read once so an existing install keeps its choice. */
     private const val LEGACY_KEY_ZONE_COLORS = "zone_colors"
@@ -182,6 +187,49 @@ object Settings {
         prefs(context).edit().putBoolean(KEY_RAISED_TAIL, enabled).apply()
     }
 
+    /** Which type id the composite HUD field shows in each half, left and right. */
+    fun hudSlots(context: Context, known: Set<String>): Pair<String, String> {
+        val prefs = prefs(context)
+        return resolveSlots(
+            left = prefs.getString(KEY_HUD_LEFT, null),
+            right = prefs.getString(KEY_HUD_RIGHT, null),
+            known = known,
+        )
+    }
+
+    /**
+     * The stored pair, or a safe fallback per side. Split out from [hudSlots] so the fallback is
+     * testable without SharedPreferences.
+     *
+     * Same shape as [resolveFont] clamping an out-of-range axis rather than discarding the
+     * setting: a stored id can stop existing after a rename (this project has renamed type ids
+     * before), so each side falls back independently rather than the whole pair being reset. If
+     * even [DEFAULT_SLOTS]'s value for that side is gone, falling back to `known.first()` is what
+     * keeps the field able to draw something at all -- returning an id outside [known] would let
+     * a later catalogue lookup fail on a coroutine mid-ride, taking the whole extension with it.
+     */
+    internal fun resolveSlots(left: String?, right: String?, known: Set<String>): Pair<String, String> {
+        if (known.isEmpty()) return DEFAULT_SLOTS
+        fun resolve(stored: String?, default: String): String = when {
+            stored != null && stored in known -> stored
+            default in known -> default
+            else -> known.first()
+        }
+        return resolve(left, DEFAULT_SLOTS.first) to resolve(right, DEFAULT_SLOTS.second)
+    }
+
+    /**
+     * Written together in one `edit()` even though each side is independent: the listener below
+     * fires once per key, but both callbacks re-read the now-committed pair, and [prefFlow]
+     * already ends in `distinctUntilChanged`, so the field still redraws only once.
+     */
+    fun setHudSlots(context: Context, left: String, right: String) {
+        prefs(context).edit()
+            .putString(KEY_HUD_LEFT, left)
+            .putString(KEY_HUD_RIGHT, right)
+            .apply()
+    }
+
     fun zoneColorModeFlow(context: Context): Flow<ZoneColorMode> =
         prefFlow(context, setOf(KEY_ZONE_COLOR_MODE), ::zoneColorMode)
 
@@ -191,6 +239,9 @@ object Settings {
         prefFlow(context, setOf(KEY_FONT, KEY_FONT_WIDTH, KEY_FONT_WEIGHT, KEY_RAISED_TAIL)) {
             Appearance(fontSetting(it), raisedTail(it))
         }
+
+    fun hudSlotsFlow(context: Context, known: Set<String>): Flow<Pair<String, String>> =
+        prefFlow(context, setOf(KEY_HUD_LEFT, KEY_HUD_RIGHT)) { hudSlots(it, known) }
 
     private fun <T> prefFlow(
         context: Context,
