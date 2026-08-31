@@ -405,15 +405,15 @@ class MainActivity : Activity() {
             }
         }
 
-        // HUD is expanded by default because it is the only section that configures one
-        // specific field, so it sits last, after the two that apply to every field. It is still
-        // the one card open on arrival: only one section is open at a time, and an accordion that
-        // opens on nothing gives a rider no sense of what a card contains until they tap one.
+        // HUD sits last because it is the only section that configures one specific field,
+        // after the two that apply to every field. It opens closed like the others: every
+        // section's description already says what the card holds, so opening one on arrival only
+        // costs the rider the scroll it takes to see the other two.
         val hudSection = section(
             getString(R.string.hud_section),
             getString(R.string.section_hud_desc),
             R.drawable.ic_bignum,
-            true,
+            false,
             hudLeftLabel, hudLeft, hudRightLabel, hudRight, hudNote,
         )
         val appearanceSection = section(
