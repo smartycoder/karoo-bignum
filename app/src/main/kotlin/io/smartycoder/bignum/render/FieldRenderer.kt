@@ -369,6 +369,9 @@ object FieldRenderer {
          * sibling laid on top rather than a row above, so the number keeps the whole tile and
          * gives up height only in the cases where it would actually end up underneath the bar.
          * On a right-aligned field it never does, because fitEnd pins the raster to the bottom.
+         *
+         * When it does give up height, it gives up this PLUS the ordinary edge padding, so the
+         * gap under the bar matches the gap at the other three edges.
          */
         overlayTopPx: Int = 0,
     ) {
@@ -433,9 +436,16 @@ object FieldRenderer {
         // fitCenter leaves half the slack above it; fitStart pins it to the top, so it always
         // pays. The re-measure means the number is drawn at the size it ends up shown at rather
         // than being scaled down by the view afterwards.
-        // Clamped to half the box: an overlay taller than the room it sits over would leave the
-        // number a negative budget, and measure() would hand back nothing at all.
-        val overlay = overlayTopPx.coerceIn(0, (fullBox / 2).coerceAtLeast(0))
+        // The overlay PLUS the ordinary edge padding, not the bare overlay. Every other side of
+        // a field is inset by `pad`, and a full header carries that inset inside its own bitmap,
+        // so the number below it gets air for free. An icon-only header has no bitmap under the
+        // bar, so reserving the bar's bare height left the digits touching it: measured in the
+        // Karoo 3 page editor at 478x148, the bar ended at row 108 and the digits began at 109.
+        // Nothing was clipped, and it still read as clipped.
+        //
+        // Clamped to half the box: a reservation taller than the room it sits over would leave
+        // the number a negative budget, and measure() would hand back nothing at all.
+        val overlay = (overlayTopPx + pad).coerceIn(0, (fullBox / 2).coerceAtLeast(0))
         val headerPad = when {
             !iconOnlyHeader -> header.height
             inkTopFor(config.alignment, fullBox, metrics.height) >= overlay -> 0
