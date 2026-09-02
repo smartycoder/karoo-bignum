@@ -3,11 +3,11 @@
   "packageName": "io.smartycoder.bignum",
   "iconUrl": "https://github.com/smartycoder/karoo-bignum/raw/main/docs/icon.png",
   "latestApkUrl": "https://github.com/smartycoder/karoo-bignum/releases/latest/download/app-release.apk",
-  "latestVersion": "1.3.0",
-  "latestVersionCode": 6,
+  "latestVersion": "1.3.1",
+  "latestVersionCode": 7,
   "developer": "smartycoder",
   "description": "Large, bold numeric data fields with optional HR and power zone coloring.",
-  "releaseNotes": "The HUD tile gains an optional zone bar across the top, filled to where your heart rate or power sits on your Karoo zones and coloured with that zone. Its source is a separate choice, so 3-second power can drive the bar while the two halves show something else. With the bar up the halves keep their icon and drop their label.",
+  "releaseNotes": "On a short tile the HUD's zone bar sat flush against the two numbers. Nothing was clipped, but with no air between them it read as clipped. The bar now keeps the same inset every other edge of a field has. Full-height tiles are unchanged.",
   "tags": [
     "datafield",
     "numeric"

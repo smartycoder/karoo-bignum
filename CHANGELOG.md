@@ -6,6 +6,16 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Each entry here should match the `releaseNotes` field in `app/manifest.json`, which is what the
 Karoo shows in its own update flow.
 
+## [1.3.1] - 2026-09-02
+
+### Fixed
+
+- On a short tile the HUD's zone bar sat flush against the two numbers, with no gap at all.
+  Nothing was clipped -- the digits began one pixel below the bar -- but without air between
+  them it read as clipped. The bar now reserves the same inset every other edge of a field
+  keeps. Only tiles where the number grows tall enough to reach the bar are affected; on a
+  full-height tile nothing changes.
+
 ## [1.3.0] - 2026-09-02
 
 ### Added
@@ -178,7 +188,8 @@ First public release.
 - The rounded card behind each field is drawn by Karoo. On a ride page it does not clip the
   extension's view to that card, so the fill rounds its own corners to match.
 
-[Unreleased]: https://github.com/smartycoder/karoo-bignum/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/smartycoder/karoo-bignum/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.3.1
 [1.3.0]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.3.0
 [1.2.1]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.2.1
 [1.2.0]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.2.0
