@@ -6,7 +6,7 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Each entry here should match the `releaseNotes` field in `app/manifest.json`, which is what the
 Karoo shows in its own update flow.
 
-## [Unreleased]
+## [1.3.0] - 2026-09-02
 
 ### Added
 
@@ -15,9 +15,25 @@ Karoo shows in its own update flow.
   are separated by a hairline. Pick what each half shows in the BigNum app; any of the other
   58 fields will do, the same one twice included. A half whose sensor drops out recovers on
   its own without taking the other half with it.
+- **The HUD's zone bar**, an optional row across the top of the tile, filled to where your heart
+  rate or power sits on your Karoo zones and coloured with that zone. Pick the source in the
+  BigNum app -- any zone-carrying field, so PWR 3s can drive the bar while the halves show
+  something else entirely. Every zone gets an equal share of the width, so the top of Z3 is
+  three fifths along on any rider's scale. With the bar up the two halves drop their labels and
+  keep only their icon: the bar has taken the row the labels were read from, and it names its
+  own source with an icon and the live value, drawn in whatever number font you picked and sized
+  on the digits themselves, so changing the face does not change how tall the bar reads. The bar is laid OVER the tile rather than stacked
+  above it, so neither number gives up a pixel unless it would otherwise sit underneath it --
+  which, with numbers pinned to the bottom of their half, is never. Both of those flip between black and white as the
+  fill passes under them, so they stay legible on the zone colour and on the empty track alike.
+  Turning zone colours off turns the bar off too, on the same reading the grade wedge already
+  follows: a rider who wants no colour means everywhere.
 
 ### Changed
 
+- The heart rate field's demo value is 169 rather than 145, so a screenshot of the zone bar lands
+  it in the top half of the scale rather than the middle. Test mode and the page editor's preview
+  both show the new number.
 - The settings screen is grouped into collapsible sections -- Appearance, Global and HUD --
   rather than one flat scroll, and one section is open at a time.
 
@@ -157,7 +173,10 @@ First public release.
 - The rounded card behind each field is drawn by Karoo. On a ride page it does not clip the
   extension's view to that card, so the fill rounds its own corners to match.
 
-[Unreleased]: https://github.com/smartycoder/karoo-bignum/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/smartycoder/karoo-bignum/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.3.0
+[1.2.1]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.2.1
+[1.2.0]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.2.0
 [1.1.0]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.1.0
 [1.0.1]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.0.1
 [1.0.0]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.0.0
