@@ -83,6 +83,7 @@ object Settings {
     private const val KEY_RAISED_TAIL = "raised_decimals"
     private const val KEY_HUD_LEFT = "hud_slot_left"     // e.g. "speed"
     private const val KEY_HUD_RIGHT = "hud_slot_right"   // e.g. "hr"
+    private const val KEY_HUD_BAR = "hud_bar_source"     // e.g. "power3s"; absent means off
 
     /** Saira's axis ranges; anything read back from preferences is clamped into them. */
     private val WIDTH_RANGE = 50..125
@@ -229,6 +230,27 @@ object Settings {
             .putString(KEY_HUD_RIGHT, right)
             .apply()
     }
+
+    /**
+     * Which field drives the HUD's zone bar, or null for no bar at all.
+     *
+     * Unlike [hudSlots] there is NO fallback to a default id: an unset preference and an id this
+     * build no longer has must both mean the bar is off. Substituting some other field would put
+     * a bar on the tile that the rider never asked for, and it would be a bar about the wrong
+     * thing -- the two failures a slot can afford and this cannot.
+     */
+    fun hudBarSource(context: Context, known: Set<String>): String? =
+        prefs(context).getString(KEY_HUD_BAR, null)?.takeIf { it in known }
+
+    /** Null turns the bar off. */
+    fun setHudBarSource(context: Context, typeId: String?) {
+        prefs(context).edit().apply {
+            if (typeId == null) remove(KEY_HUD_BAR) else putString(KEY_HUD_BAR, typeId)
+        }.apply()
+    }
+
+    fun hudBarSourceFlow(context: Context, known: Set<String>): Flow<String?> =
+        prefFlow(context, setOf(KEY_HUD_BAR)) { hudBarSource(it, known) }
 
     fun zoneColorModeFlow(context: Context): Flow<ZoneColorMode> =
         prefFlow(context, setOf(KEY_ZONE_COLOR_MODE), ::zoneColorMode)

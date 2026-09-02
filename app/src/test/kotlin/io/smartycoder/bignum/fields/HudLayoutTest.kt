@@ -25,12 +25,17 @@ class HudLayoutTest {
         preview = preview,
     )
 
+    // The divider's real width comes from R.dimen.hud_divider_width, which this module cannot
+    // resolve without a Context. Passing it in is the point: the arithmetic has to hold for
+    // whatever the layout inflated, not just for the 1px it happens to be today.
+    private val divider = 1
+
     @Test
     fun `even tile width splits with nothing lost to the divider`() {
         val parent = config(200)
-        val left = halfConfig(parent, left = true).viewSize.first
-        val right = halfConfig(parent, left = false).viewSize.first
-        assertEquals(200, left + right + DIVIDER_PX)
+        val left = halfConfig(parent, left = true, dividerPx = divider).viewSize.first
+        val right = halfConfig(parent, left = false, dividerPx = divider).viewSize.first
+        assertEquals(200, left + right + divider)
     }
 
     @Test
@@ -38,9 +43,22 @@ class HudLayoutTest {
         // The case a second `usable / 2` would get wrong: the remainder pixel has to land in
         // one of the halves, not be floored away on both sides.
         val parent = config(201)
-        val left = halfConfig(parent, left = true).viewSize.first
-        val right = halfConfig(parent, left = false).viewSize.first
-        assertEquals(201, left + right + DIVIDER_PX)
+        val left = halfConfig(parent, left = true, dividerPx = divider).viewSize.first
+        val right = halfConfig(parent, left = false, dividerPx = divider).viewSize.first
+        assertEquals(201, left + right + divider)
+    }
+
+    @Test
+    fun `a wider divider still leaves the halves adding back up`() {
+        // Nothing here may assume the hairline is one pixel: the layout owns that number now.
+        for (width in listOf(0, 1, 2, 7)) {
+            for (tile in listOf(200, 201)) {
+                val parent = config(tile)
+                val left = halfConfig(parent, left = true, dividerPx = width).viewSize.first
+                val right = halfConfig(parent, left = false, dividerPx = width).viewSize.first
+                assertEquals(tile, left + right + width)
+            }
+        }
     }
 
     @Test
@@ -53,11 +71,11 @@ class HudLayoutTest {
             val parent = config(200, alignment = parentAlignment)
             assertEquals(
                 parentAlignment,
-                halfConfig(parent, left = true).alignment,
+                halfConfig(parent, left = true, dividerPx = divider).alignment,
             )
             assertEquals(
                 parentAlignment,
-                halfConfig(parent, left = false).alignment,
+                halfConfig(parent, left = false, dividerPx = divider).alignment,
             )
         }
     }
@@ -66,9 +84,10 @@ class HudLayoutTest {
     fun `height is untouched and preview is carried through`() {
         val parent = config(200, preview = true)
         for (left in listOf(true, false)) {
-            val half = halfConfig(parent, left)
+            val half = halfConfig(parent, left, dividerPx = divider)
             assertEquals(100, half.viewSize.second)
             assertEquals(true, half.preview)
         }
     }
+
 }

@@ -13,5 +13,5 @@ class HeartRateField(extension: String, karoo: KarooSystemService)
     override val iconRes = R.drawable.ic_heart
     override val zoneKind = ZoneKind.HR
     override val format = Formatters.bpm
-    override val previewValue = 145.0
+    override val previewValue = 141.0
 }

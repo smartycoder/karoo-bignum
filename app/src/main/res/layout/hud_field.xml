@@ -1,50 +1,84 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  The HUD tile: two whole BigNum fields side by side, each in its own half.
+  The HUD tile: two whole BigNum fields side by side, each in its own half, with an optional
+  zone bar along the top.
 
   Both FrameLayouts stay EMPTY here on purpose: they are containers that HudField fills at
   runtime with RemoteViews.addView, one numeric_field.xml per slot. Nothing in this file may
   assume what ends up inside them.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="horizontal">
-
-    <FrameLayout android:id="@+id/slot_left"
-        android:layout_width="0dp"
-        android:layout_weight="1"
-        android:layout_height="match_parent"/>
+    android:layout_height="match_parent">
 
     <!--
-      A fixed mid grey rather than a theme-aware colour: this project has no values-night/ at
-      all (everything else resolves light/dark in code via Theme.isNight), and #808080 holds
-      its own against both the white and the black card. The divider sits OUTSIDE both slot
-      containers, so a slot filled with its zone colour under ZoneColorMode.FILL paints only
-      its own half and leaves this line untouched.
+      A sibling of the bar, not a child below it, and it keeps the WHOLE tile height. The contract
+      that makes that safe is stated once, on FieldRenderer.render's overlayTopPx.
 
-      An ImageView and not a bare View, which is the obvious choice for a rule and does not
-      work: RemoteViews inflates only the classes on its own allow list, and android.view.View
-      is not one of them. A plain View here threw
-      "Class not allowed to be inflated android.view.View" on the device while every JVM test
-      still passed, because nothing off-device inflates this file.
-
-      Inset 5dp top and bottom rather than run edge to edge, and 5dp because that is
-      FieldRenderer's own EDGE_PADDING_DP: the line then stops exactly where each half's
-      content stops, instead of at an arbitrary gap. Height is match_parent minus those
-      margins, so it still tracks whatever cell the tile is given.
+      It carries no id because nothing addresses it: an earlier design padded this row from
+      HudField, and that is what cost both numbers the bar's full height whether they needed it
+      or not.
     -->
-    <ImageView
-        android:layout_width="1px"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="5dp"
-        android:layout_marginBottom="5dp"
-        android:background="#808080"
+        android:orientation="horizontal">
+
+        <FrameLayout android:id="@+id/slot_left"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"/>
+
+        <!--
+          A fixed mid grey rather than a theme-aware colour: this project has no values-night/ at
+          all (everything else resolves light/dark in code via Theme.isNight), and #808080 holds
+          its own against both the white and the black card. The divider sits OUTSIDE both slot
+          containers, so a slot filled with its zone colour under ZoneColorMode.FILL paints only
+          its own half and leaves this line untouched.
+
+          An ImageView and not a bare View, which is the obvious choice for a rule and does not
+          work: RemoteViews inflates only the classes on its own allow list, and android.view.View
+          is not one of them. A plain View here threw
+          "Class not allowed to be inflated android.view.View" on the device while every JVM test
+          still passed, because nothing off-device inflates this file.
+
+          Inset top and bottom by field_edge_padding rather than run edge to edge, and by that
+          resource rather than a literal because it is the same inset the renderer pads a field's
+          content with: the line then stops exactly where each half's content stops, instead of at
+          an arbitrary gap. Height is match_parent minus those margins, so it still tracks
+          whatever cell the tile is given.
+
+          The row runs the full height of the tile, so this line passes BEHIND the bar. That is
+          only safe because renderZoneBar paints an opaque ground before its translucent track:
+          without it this grey rule showed through the empty part of the bar and blinked in and
+          out as the fill crossed it.
+        -->
+        <ImageView
+            android:layout_width="@dimen/hud_divider_width"
+            android:layout_height="match_parent"
+            android:layout_marginTop="@dimen/field_edge_padding"
+            android:layout_marginBottom="@dimen/field_edge_padding"
+            android:background="#808080"
+            android:contentDescription="@null"/>
+
+        <FrameLayout android:id="@+id/slot_right"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="match_parent"/>
+
+    </LinearLayout>
+
+    <!--
+      scaleType is fitXY and not the default, and that is a contract rather than a preference:
+      the bar is drawn at exactly this view's pixel size, and fitCenter would letterbox it and put
+      the fill's edge somewhere other than where the value says it is.
+    -->
+    <ImageView android:id="@+id/hud_bar"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/hud_bar_height"
+        android:layout_gravity="top"
+        android:scaleType="fitXY"
+        android:visibility="gone"
         android:contentDescription="@null"/>
 
-    <FrameLayout android:id="@+id/slot_right"
-        android:layout_width="0dp"
-        android:layout_weight="1"
-        android:layout_height="match_parent"/>
-
-</LinearLayout>
+</FrameLayout>

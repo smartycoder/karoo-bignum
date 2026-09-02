@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+      The HUD zone bar's height. Declared here and nowhere else on purpose: hud_field.xml sizes
+      the ImageView from it and HudField reads the same resource both to size the bitmap it draws
+      into and to tell the renderer how much of the tile the bar covers. A `26f * density` copy alongside the
+      literal in the layout would not merely be a duplicate: toInt() truncates where Android's
+      own dp conversion rounds (dp * density + 0.5f), so at a non-integer density the bitmap would
+      come out a pixel shorter than the view fitXY stretches it into, and the row padding a pixel
+      short of the bar. resources.getDimensionPixelSize applies the same rounding as the layout
+      inflater, so the two cannot disagree.
+
+      26dp because that is what the header row it replaces measures: FieldRenderer draws the
+      header icon at 11.07dp * 1.4 with 5dp of padding on each side, which lands at 25.5dp.
+    -->
+    <dimen name="hud_bar_height">26dp</dimen>
+
+    <!--
+      Breathing room around a field's content: the number, the header, the zone bar's icon and
+      value, and the inset the HUD's divider stops at. A resource and not a Kotlin constant
+      because BOTH sides need it, and while it lived only in FieldRenderer the layout repeated it
+      as a literal 5dp with a comment promising the two matched.
+
+      Read with getDimensionPixelSize, which rounds the way the layout inflater does. The Kotlin
+      constant it replaces multiplied by density and truncated, so at a non integer density the
+      padding computed in code could land a pixel off the margin declared here.
+    -->
+    <dimen name="field_edge_padding">5dp</dimen>
+
+    <!--
+      The hairline between the HUD's two halves, in px rather than dp on purpose: it is a rule,
+      and a rule is one pixel on every screen rather than something that thickens with density.
+
+      Here rather than in the layout alone because HudField subtracts it before dividing the tile
+      between the two slots. If the layout said 1px and the code assumed something else, every
+      number in the tile would be scaled against a budget that does not match the space it is
+      drawn into.
+    -->
+    <dimen name="hud_divider_width">1px</dimen>
+
+</resources>

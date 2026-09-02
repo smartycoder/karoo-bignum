@@ -55,6 +55,8 @@ Lap - Max Power · Lap - W/kg · Lap - VAM · Lap - Ascent · Lap - Descent
 
 **Time & environment** — Time - Elapsed · Temperature
 
+**Composite** — HUD - Two Fields
+
 The navigation fields need a route loaded; without one they sit at `--`. **Nav - ETA** is a wall
 clock in 24-hour form, drawn whole rather than with raised minutes.
 
@@ -104,6 +106,40 @@ Pick one of three modes in the BigNum app (main menu → BigNum):
 Fields without a zone, a value of zero, and a profile with no zones configured all stay in the
 normal text color and are never filled — an empty field should not sit there in a color that
 says something about data it does not have.
+
+### HUD
+
+**HUD - Two Fields** is one tile showing two other fields side by side, each drawn as a whole
+BigNum field — its own header, zone color, grade wedge and typeface — with a hairline between
+them. Pick what each half shows in the BigNum app; any of the other 58 fields will do, the same
+one twice included. A half whose sensor drops out recovers on its own without taking the other
+half down with it.
+
+<img src="docs/screenshots/hud.png" width="260" alt="HUD tile with the zone bar: heart rate across the top, speed and 3-second power below">
+
+An optional **zone bar** runs across the top of the tile. It fills to where your heart rate or
+power sits on your Karoo zones and takes that zone's color. Its source is a separate choice, so
+`Power - 3s` can drive the bar while the two halves show something else entirely — above, the bar
+is heart rate while the halves are speed and 3-second power.
+
+Every zone gets an equal share of the width, so the top of Z3 is three fifths along whatever your
+zones are set to. That is deliberate rather than a shortcut: it needs only each zone's own
+boundaries, so a scale whose top zone has no sensible ceiling cannot pin the bar near empty for a
+whole ride, and the bar reads the same on two riders with different numbers.
+
+The bar carries its source's icon and the live value, the value in the same font as every other
+number — it is a reading, not a caption. Both are drawn twice and clipped at the fill's edge, so a
+glyph the edge runs through is simply split — black on the zone color, white on the empty track,
+legible on either side wherever the fill happens to be. Its height is measured on the digits
+rather than set as a text size, so it stays put when you change the face.
+
+With the bar up the two halves drop their labels and keep only their icon, since the bar has
+taken the row the labels were read from. The bar is laid over the tile rather than stacked above
+it, so neither number gives up height unless it would otherwise end up underneath it.
+
+Turning zone coloring off turns the bar off too, on the same reading the grade wedge follows: a
+rider who wants no color means everywhere. Without zones in your Karoo profile there is nothing
+for the bar to fill towards, so it stays hidden rather than showing a track that never moves.
 
 ## Installation
 

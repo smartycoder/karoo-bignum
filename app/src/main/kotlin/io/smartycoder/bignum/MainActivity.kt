@@ -19,6 +19,7 @@ import android.widget.TextView
 import io.hammerhead.karooext.KarooSystemService
 import io.smartycoder.bignum.fields.FieldCatalog
 import io.smartycoder.bignum.fields.ids
+import io.smartycoder.bignum.fields.zoneCapable
 
 class MainActivity : Activity() {
 
@@ -261,6 +262,40 @@ class MainActivity : Activity() {
             Settings.setHudSlots(this, slots.first, slots.second)
         }
 
+        val hudBarLabel = TextView(this).apply {
+            text = getString(R.string.hud_bar)
+            textSize = 18f
+            setPadding(0, dp(14), 0, 0)
+        }
+
+        // Only the fields that carry a zone: everything else has no scale for a bar to fill
+        // towards. "Off" is position 0 rather than a switch beside a picker, so choosing a source
+        // and turning the bar on are one action instead of two that can disagree.
+        val barFields = catalog.zoneCapable
+        val barLabels = listOf(getString(R.string.hud_bar_off)) + barFields.map { it.label }
+        val barTypeIds = barFields.map { it.typeId }
+        // indexOf and not indexOrZero: this list has an "Off" row at position 0, so +1 on
+        // indexOrZero's fallback would select the FIRST ZONE FIELD for an id this build no longer
+        // has -- turning the bar on, with a source the rider never picked, exactly the failure
+        // Settings.hudBarSource's KDoc says a bar cannot afford. Unreachable today because
+        // hudBarSource filters against `known` first, and it stays unreachable if that ever
+        // loosens.
+        val barSelected = Settings.hudBarSource(this, barFields.ids)
+            ?.let { barTypeIds.indexOf(it) }
+            ?.takeIf { it >= 0 }
+            ?.plus(1)
+            ?: 0
+
+        val hudBar = spinner(barLabels, barSelected) {
+            Settings.setHudBarSource(this, if (it == 0) null else barFields[it - 1].typeId)
+        }
+
+        val hudBarNote = TextView(this).apply {
+            text = getString(R.string.hud_bar_desc)
+            textSize = 13f
+            setPadding(0, dp(7), 0, 0)
+        }
+
         val hudNote = TextView(this).apply {
             text = getString(R.string.hud_desc)
             textSize = 13f
@@ -414,7 +449,7 @@ class MainActivity : Activity() {
             getString(R.string.section_hud_desc),
             R.drawable.ic_bignum,
             false,
-            hudLeftLabel, hudLeft, hudRightLabel, hudRight, hudNote,
+            hudLeftLabel, hudLeft, hudRightLabel, hudRight, hudBarLabel, hudBar, hudBarNote, hudNote,
         )
         val appearanceSection = section(
             getString(R.string.section_appearance),

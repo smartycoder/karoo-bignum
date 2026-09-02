@@ -105,3 +105,10 @@ fun List<BaseNumericField>.byId(typeId: String): BaseNumericField? =
     firstOrNull { it.typeId == typeId }
 
 val List<BaseNumericField>.ids: Set<String> get() = mapTo(mutableSetOf()) { it.typeId }
+
+/**
+ * The fields the HUD's zone bar can be driven by: the ones that carry a heart rate or power
+ * zone. Everything else has no scale to be placed on -- a bar of speed or elapsed time would
+ * have no meaning to fill towards.
+ */
+val List<BaseNumericField>.zoneCapable: List<BaseNumericField> get() = filter { it.zoneKind != null }

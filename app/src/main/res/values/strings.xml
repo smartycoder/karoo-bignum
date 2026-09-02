@@ -90,6 +90,9 @@
     <string name="hud_section">HUD field</string>
     <string name="hud_slot_left">Left</string>
     <string name="hud_slot_right">Right</string>
+    <string name="hud_bar">Zone bar</string>
+    <string name="hud_bar_off">Off</string>
+    <string name="hud_bar_desc">A bar across the top of the HUD, filled to where the chosen source sits on your Karoo zones and colored with that zone. With the bar on, the two halves show their icon without a label — the bar has taken the row the labels were in.</string>
     <string name="hud_desc">Choose what the HUD field shows in each half. The settings below apply to every field.</string>
 
     <!-- Section card titles and descriptions for the settings screen. Titles are rendered

@@ -13,22 +13,37 @@ import kotlin.math.abs
  */
 object ZoneColors {
 
+    // One constant per sampled colour, named for the effort rather than for a zone number: the
+    // two scales share these swatches but put them at different indices -- red is Z5 on the heart
+    // rate scale and Z6 on the power one -- so a name like "Z5" would be wrong on one of them.
+    // Copied as literals into both arrays, they were seven values maintained as twelve, and a
+    // correction to one sampled swatch could reach one scale and not the other.
+    private const val RECOVERY = 0xFF60EEB2.toInt()
+    private const val ENDURANCE = 0xFF00B988.toInt()
+    private const val TEMPO = 0xFFFFF500.toInt()
+    private const val THRESHOLD = 0xFFFB8C65.toInt()
+    private const val VO2 = 0xFFFE581F.toInt()
+    private const val ANAEROBIC = 0xFFD60404.toInt()
+    private const val NEUROMUSCULAR = 0xFFB700A2.toInt()
+
+    // The arrays stay separate, and their ORDER is the thing each one owns: which effort a scale
+    // puts at which zone is exactly where the two diverge.
     private val hrPalette = intArrayOf(
-        0xFF60EEB2.toInt(), // Z1 Active Recovery
-        0xFF00B988.toInt(), // Z2 Endurance
-        0xFFFFF500.toInt(), // Z3 Tempo
-        0xFFFB8C65.toInt(), // Z4 Lactate Threshold
-        0xFFD60404.toInt(), // Z5 Max
+        RECOVERY,     // Z1 Active Recovery
+        ENDURANCE,    // Z2 Endurance
+        TEMPO,        // Z3 Tempo
+        THRESHOLD,    // Z4 Lactate Threshold
+        ANAEROBIC,    // Z5 Max
     )
 
     private val powerPalette = intArrayOf(
-        0xFF60EEB2.toInt(), // Z1 Active Recovery
-        0xFF00B988.toInt(), // Z2 Endurance
-        0xFFFFF500.toInt(), // Z3 Tempo
-        0xFFFB8C65.toInt(), // Z4 Lactate Threshold
-        0xFFFE581F.toInt(), // Z5 VO2 Max
-        0xFFD60404.toInt(), // Z6 Anaerobic Capacity
-        0xFFB700A2.toInt(), // Z7 Neuromuscular
+        RECOVERY,     // Z1 Active Recovery
+        ENDURANCE,    // Z2 Endurance
+        TEMPO,        // Z3 Tempo
+        THRESHOLD,    // Z4 Lactate Threshold
+        VO2,          // Z5 VO2 Max
+        ANAEROBIC,    // Z6 Anaerobic Capacity
+        NEUROMUSCULAR, // Z7 Neuromuscular
     )
 
     /**
@@ -50,24 +65,64 @@ object ZoneColors {
     }
 
     /**
+     * The rider's own zones for [kind], or an empty list where there are none. Public because
+     * [ZoneBar] needs the same list this class picks a colour from, and two places reading
+     * [UserProfile] for the same thing would be two places to keep in step.
+     */
+    /**
+     * The colour of zone 1 on [kind]'s scale. Both scales start on the same colour, but they are
+     * kept as two lookups rather than one constant so a future divergence at the bottom of the
+     * scales is a palette edit and not a bug.
+     *
+     * For the zone bar below the first zone's floor, where [color] has no zone to name: the fill
+     * is zero-width there, and this is what the icon and the value are contrasted against.
+     */
+    fun baseColor(kind: ZoneKind): Int = when (kind) {
+        ZoneKind.HR -> hrPalette.first()
+        ZoneKind.POWER -> powerPalette.first()
+    }
+
+    /**
+     * Index of the zone [value] falls in, or -1 when it is under the first zone's floor.
+     *
+     * The one place that answers "which zone is this", for both the colour lookup and the bar's
+     * fill. It used to be written twice, once on the Double and once on `value.toInt()` -- which
+     * happen to agree, because every zone boundary is an Int and `floor(v) >= min` is the same
+     * question as `v >= min` there. Two spellings of one rule is how a later change to boundary
+     * handling reaches the colour and not the bar, and paints a fill that disagrees with it.
+     */
+    fun zoneIndex(value: Double, zones: List<UserProfile.Zone>): Int =
+        zones.indexOfLast { value >= it.min }
+
+    fun zones(kind: ZoneKind, profile: UserProfile?): List<UserProfile.Zone> {
+        // The null check is its own statement so the `when` below stays exhaustive over
+        // ZoneKind: an `else ->` here would silently hand a future kind the power zones instead
+        // of failing to compile, which is the one mistake this list cannot survive.
+        if (profile == null) return emptyList()
+        return when (kind) {
+            ZoneKind.HR -> profile.heartRateZones
+            ZoneKind.POWER -> profile.powerZones
+        }
+    }
+
+    /**
      * Zone colour for [value], or null when no zone applies -- no profile, a non-positive
      * value, or a profile that carries no zones. The caller substitutes its own default;
      * returning a colour here would override the light/dark text colour from [Theme].
      */
     fun color(kind: ZoneKind, value: Double, profile: UserProfile?): Int? {
         if (profile == null || value <= 0) return null
-        val zones = when (kind) {
-            ZoneKind.HR -> profile.heartRateZones
-            ZoneKind.POWER -> profile.powerZones
-        }
+        val zones = zones(kind, profile)
         if (zones.isEmpty()) return null
         val palette = when (kind) {
             ZoneKind.HR -> hrPalette
             ZoneKind.POWER -> powerPalette
         }
-        val v = value.toInt()
-        val idx = zones.indexOfLast { v >= it.min }
-            .let { if (it < 0) 0 else it }
+        // coerceAtLeast(0): a reading under the first zone's floor has no zone of its own, and
+        // the lowest colour is the honest answer for it -- unlike ZoneBar.fraction, which wants
+        // an empty bar there rather than a first-zone-worth of fill.
+        val idx = zoneIndex(value, zones)
+            .coerceAtLeast(0)
             .coerceAtMost(palette.lastIndex)
         return palette[idx]
     }
