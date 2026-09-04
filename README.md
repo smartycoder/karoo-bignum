@@ -59,9 +59,9 @@ Temperature · Battery
 **Composite** — HUD - Two Fields
 
 The navigation fields need a route loaded; without one they sit at `--`. **Nav - ETA** is a wall
-clock in 24-hour form, drawn whole rather than with raised minutes. **Clock**, **Sunrise** and
-**Sunset** are drawn the same way; the Karoo works the two sun times out from where you are, so
-they need a position fix before they read anything.
+clock in 24-hour form. **Clock**, **Sunrise** and **Sunset** are drawn the same way; the Karoo
+works the two sun times out from where you are, so they need a position fix before they read
+anything.
 
 **Time - Riding** is the recording clock and stops when the ride does; **Time - Total** runs
 from the start of the ride and keeps counting through the stops, so it is the longer of the two
@@ -82,13 +82,14 @@ value, so on the fields where width is the binding constraint the shorter form i
 appreciably taller. A running duration steps down a size as it passes the hour; two glyphs of
 height for the first hour of every ride is the trade.
 
-The wall clocks — Clock, Sunrise, Sunset and Nav - ETA — are not durations and do none of this.
-They hold one width at `h:mm` and are drawn whole.
+The wall clocks — Clock, Sunrise, Sunset and Nav - ETA — hold one width at `h:mm` instead, since
+their value cannot outgrow it. They still raise their minutes, so everything shaped like a clock
+shrinks its least significant unit and nothing on a page reads as the odd one out.
 
 With **Raised decimals** on, the seconds come out about half size and raised: `1:34:17` reads as
 a large **1:34** with a small `17` after it. Hours and minutes are what you read at a glance; the
-seconds only need to be present. The wall clocks opt out — there is no tail on `15:14` worth
-shrinking.
+seconds only need to be present. On a wall clock the same rule takes the minutes: `15:14` reads
+as a large **15** with a small `14`.
 
 ### Raised decimals
 

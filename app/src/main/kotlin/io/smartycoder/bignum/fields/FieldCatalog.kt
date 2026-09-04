@@ -125,7 +125,7 @@ object FieldCatalog {
             // 39 minutes: the 18.6 km the field above previews, at the demo average speed, so
             // the three navigation fields tell one story in a screenshot.
             TimeField(extension, "timeToDestination", karoo, DataType.Type.TIME_TO_DESTINATION, "TIME TO DEST", previewValue = 2_360_000.0, valueField = DataType.Field.TIME_TO_DESTINATION, missingValue = null),
-            SimpleField(extension, "timeOfArrival", karoo, DataType.Type.TIME_OF_ARRIVAL, "ETA", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", raisedTailAllowed = false, previewValue = ETA_PREVIEW),
+            SimpleField(extension, "timeOfArrival", karoo, DataType.Type.TIME_OF_ARRIVAL, "ETA", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", previewValue = ETA_PREVIEW),
 
             // Time and environment
             // Labelled for what karoo-ext documents ELAPSED_TIME as -- "Ride Time, time spent
@@ -140,10 +140,12 @@ object FieldCatalog {
             TimeField(extension, "totalTime", karoo, DataType.Type.RIDE_TIME, "TOTAL TIME", previewValue = 5_680_000.0, demoInTestMode = false),
             // The wall clock opts out of the demo value for the reason the ride clock does: it
             // runs with nothing paired, so a frozen one reads as a broken field.
-            SimpleField(extension, "clockTime", karoo, DataType.Type.CLOCK_TIME, "CLOCK", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", raisedTailAllowed = false, previewValue = CLOCK_PREVIEW, demoInTestMode = false),
-            // Both keep the ETA's treatment -- a 24-hour wall clock drawn whole, no raised tail.
-            SimpleField(extension, "sunrise", karoo, DataType.Type.SUNRISE, "SUNRISE", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", raisedTailAllowed = false, previewValue = SUNRISE_PREVIEW),
-            SimpleField(extension, "sunset", karoo, DataType.Type.SUNSET, "SUNSET", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", raisedTailAllowed = false, previewValue = SUNSET_PREVIEW),
+            SimpleField(extension, "clockTime", karoo, DataType.Type.CLOCK_TIME, "CLOCK", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", previewValue = CLOCK_PREVIEW, demoInTestMode = false),
+            // Both keep the ETA's treatment: a 24-hour wall clock whose minutes raise like any
+            // other tail, so every field that looks like a clock shrinks its least significant
+            // unit and nothing on a page is the odd one out.
+            SimpleField(extension, "sunrise", karoo, DataType.Type.SUNRISE, "SUNRISE", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", previewValue = SUNRISE_PREVIEW),
+            SimpleField(extension, "sunset", karoo, DataType.Type.SUNSET, "SUNSET", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", previewValue = SUNSET_PREVIEW),
             TemperatureField(extension, karoo),
             SimpleField(extension, "battery", karoo, DataType.Type.BATTERY_PERCENT, "BATTERY", R.drawable.ic_battery, Formatters.percent, previewValue = 64.0),
         )

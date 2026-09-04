@@ -26,6 +26,20 @@ class RaisedTailTest {
         assertEquals("34" to "56", RaisedTail.split("34:56", raised = true))
     }
 
+    // The four wall clocks -- Clock, Sunrise, Sunset, Nav - ETA -- split at their only colon,
+    // so the minutes raise the way a duration's seconds do. Their budget is "00:00", which
+    // splits the same way, so the widest value they draw still fits it.
+    @Test
+    fun `a wall clock raises its minutes and fits the budget it is scaled against`() {
+        assertEquals("6" to "42", RaisedTail.split("6:42", raised = true))
+        assertEquals("20" to "18", RaisedTail.split("20:18", raised = true))
+        assertEquals("00" to "00", RaisedTail.template("00:00", raised = true))
+        for (minute in 0 until 1440) {
+            val (lead, tail) = RaisedTail.split(Formatters.clock(minute * 60.0, null).first, raised = true)
+            assertTrue("$lead|$tail overflows the 00:00 budget", lead.length <= 2 && tail.length == 2)
+        }
+    }
+
     @Test
     fun `a negative value keeps its sign with the digits`() {
         assertEquals("-4" to "2", RaisedTail.split("-4.2", raised = true))

@@ -35,6 +35,11 @@ Karoo shows in its own update flow.
   clock, 39 minutes left to run, arriving at 15:14. Nav - ETA's preview was a fixed epoch, so
   it rendered in the device's own zone and read as intended only in UTC.
 
+- The wall clocks raise their minutes, the way a duration raises its seconds: `15:14` draws as
+  a large **15** with a small `14`. **Nav - ETA** was drawn whole and the three clocks added
+  here followed it, which left every clock-shaped field on a page shrinking its tail except
+  those four.
+
 - **Time - Elapsed** is now **Time - Riding**, labelled `RIDE TIME` on the tile instead of
   `TIME`. It is unchanged in what it counts -- time spent recording, stops excluded, which is
   what karoo-ext documents that stream as. Against the Time - Total added beside it, `TIME`
