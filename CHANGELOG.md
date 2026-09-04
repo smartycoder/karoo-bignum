@@ -25,6 +25,14 @@ Karoo shows in its own update flow.
   rate), **Battery**, and smoothed **Speed** and **Cadence** at 3s, 5s and 10s -- power has
   carried six smoothed variants all along and neither of these had one.
 
+- The four wall clocks now preview one moment rather than four unrelated ones: 14:35 on the
+  clock, 39 minutes left to run, arriving at 15:14. The arrival time's preview was a fixed
+  epoch, so it rendered in the device's own zone and read as intended only in UTC.
+
+- **Time - Elapsed** says in the picker what it actually is -- time spent recording, stops
+  excluded. It always was that; with Time - Total beside it now, a description that only said
+  "elapsed time" left the pair impossible to tell apart.
+
 - Each field now also carries a test that it is declared in `extension_info.xml`, which is the
   list the Karoo actually builds its picker from. A field missing there compiles and streams
   and simply never shows up, so the two hand-kept lists had nothing holding them together.

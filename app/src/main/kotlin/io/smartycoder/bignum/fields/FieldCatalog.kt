@@ -28,6 +28,15 @@ object FieldCatalog {
     /** The wall clock's preview, on the same footing as the two above it: 14:35. */
     internal const val CLOCK_PREVIEW = 52_500.0
 
+    /**
+     * The arrival time's preview: 15:14, which is [CLOCK_PREVIEW] plus the 39 minutes the time
+     * to destination previews, so the four clocks in a screenshot agree with each other.
+     *
+     * Seconds into the day like the rest of them. It used to be a fixed epoch, which rendered
+     * in the device's zone and so read 14:35 only in UTC -- a demo that moved with the rider.
+     */
+    internal const val ETA_PREVIEW = 54_840.0
+
     fun build(extension: String, karoo: KarooSystemService): List<BaseNumericField> {
         return listOf(
             // Speed
@@ -116,7 +125,7 @@ object FieldCatalog {
             // 39 minutes: the 18.6 km the field above previews, at the demo average speed, so
             // the three navigation fields tell one story in a screenshot.
             TimeField(extension, "timeToDestination", karoo, DataType.Type.TIME_TO_DESTINATION, "TIME TO DEST", previewValue = 2_360_000.0, valueField = DataType.Field.TIME_TO_DESTINATION, missingValue = null),
-            SimpleField(extension, "timeOfArrival", karoo, DataType.Type.TIME_OF_ARRIVAL, "ETA", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", raisedTailAllowed = false, previewValue = 1_787_495_700_000.0),
+            SimpleField(extension, "timeOfArrival", karoo, DataType.Type.TIME_OF_ARRIVAL, "ETA", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", raisedTailAllowed = false, previewValue = ETA_PREVIEW),
 
             // Time and environment
             TimeField(extension, "elapsed", karoo, DataType.Type.ELAPSED_TIME, "TIME", previewValue = 5_073_000.0, demoInTestMode = false),
