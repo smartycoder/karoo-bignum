@@ -202,6 +202,26 @@ produces a signed `app/build/outputs/apk/release/app-release.apk`. Without `keys
 the same command still works but leaves the APK unsigned, so anyone can build the project without
 holding the key.
 
+## Publishing a release
+
+The APK is uploaded by hand, because the signing key never leaves this machine. Everything that
+does not need the key is checked by `.github/workflows/release-assets.yml`, which runs when a
+release is published.
+
+1. Bump `versionName` and `versionCode` in `app/build.gradle.kts`, `latestVersion`,
+   `latestVersionCode` and `releaseNotes` in `app/manifest.json`, and the entry in `CHANGELOG.md`.
+2. `./gradlew assembleRelease`, then tag and create the release with `app-release.apk` attached.
+3. The workflow checks that the tag, the build file and the manifest all name the same version,
+   attaches `app/manifest.json` to the release if it is not already there, and fails the run if
+   the APK is missing.
+
+**`manifest.json` has to be ON the release, not just in the repository.** The Karoo's extension
+library reads `releases/latest/download/manifest.json`; when that returns 404 the library entry
+has no data, so riders cannot open the extension's settings and are offered no update — while the
+APK sits there perfectly healthy, which is why it does not look like a release problem. It
+happened to v1.3.0 and v1.3.1. The workflow exists to make it unrepeatable, but if you ever
+publish without it, check the URL yourself.
+
 ## Support
 
 BigNum is free and open source. If it earns its place on your bars:

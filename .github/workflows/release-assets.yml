@@ -1,0 +1,113 @@
+# Guards the one release step that is easy to forget and breaks the extension for EVERY user.
+#
+# The Karoo's extension library reads releases/latest/download/manifest.json. Bumping that file
+# in the repository does nothing on its own -- it has to be ATTACHED to the release. v1.3.0 and
+# v1.3.1 both shipped with only the APK, so that URL returned 404 from 2026-09-02 until it was
+# noticed on 2026-09-04. Riders already on an older version could not open BigNum's settings and
+# were offered no update, and nothing about it looked like a release problem: the APK asset was
+# healthy the whole time.
+#
+# This cannot build or publish a release. The signing key lives in keystore.properties, which is
+# gitignored and must stay that way -- every release has to carry the same signature forever or
+# no existing install can take the update. So the APK stays a manual upload; what runs here is
+# everything that does not need the key.
+name: Release assets
+
+on:
+  release:
+    types: [published, edited]
+
+# Needed to upload an asset to the release that triggered this run.
+permissions:
+  contents: write
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    steps:
+      # The TAG's tree, not the default branch: the manifest that belongs to this release is the
+      # one committed under its tag. Checking out main would attach whatever is in flight, which
+      # for a release cut days ago is a different file.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      # VERIFY BEFORE UPLOADING, never the other way round. Attaching a manifest that disagrees
+      # with the release it is attached to would be worse than today's failure, because it would
+      # be silent: the library would offer an update whose version does not exist.
+      - name: Versions agree across tag, manifest and build file
+        env:
+          # Through the environment rather than interpolated into the script body. GitHub's own
+          # guidance: an expression is pasted in as text before the shell ever sees it, so a value
+          # containing shell syntax would be executed rather than compared.
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          tag_version="${TAG#v}"
+
+          gradle_name=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts | head -1)
+          # [0-9][0-9]* and not [0-9]\+ : the escaped plus is a GNU extension, and it silently
+          # matches nothing on a BSD sed, which is what this was first written against.
+          gradle_code=$(sed -n 's/.*versionCode = \([0-9][0-9]*\).*/\1/p' app/build.gradle.kts | head -1)
+          manifest_name=$(jq -r '.latestVersion' app/manifest.json)
+          manifest_code=$(jq -r '.latestVersionCode' app/manifest.json)
+
+          echo "tag        $tag_version"
+          echo "gradle     $gradle_name (code $gradle_code)"
+          echo "manifest   $manifest_name (code $manifest_code)"
+
+          fail=0
+          [ "$tag_version" = "$gradle_name" ] || { echo "::error::tag $tag_version != versionName $gradle_name"; fail=1; }
+          [ "$tag_version" = "$manifest_name" ] || { echo "::error::tag $tag_version != latestVersion $manifest_name"; fail=1; }
+          [ "$gradle_code" = "$manifest_code" ] || { echo "::error::versionCode $gradle_code != latestVersionCode $manifest_code"; fail=1; }
+
+          # A string here would be read as a version code of NaN by anything parsing it strictly.
+          [ "$(jq -r '.latestVersionCode | type' app/manifest.json)" = "number" ] || {
+            echo "::error::latestVersionCode must be a JSON number, not a string"; fail=1; }
+
+          # The fields every published Karoo manifest carries. Checked by name rather than
+          # against a schema file, because there is no published schema to check against: this
+          # list came from diffing working extensions' manifests.
+          for key in label packageName iconUrl latestApkUrl latestVersion latestVersionCode developer description releaseNotes tags; do
+            [ "$(jq -r --arg k "$key" 'has($k)' app/manifest.json)" = "true" ] || {
+              echo "::error::manifest.json is missing $key"; fail=1; }
+          done
+
+          exit $fail
+
+      # Idempotent on purpose: `edited` fires again for later edits, and doing nothing when the
+      # asset is already there is what keeps this from looping on its own upload.
+      - name: Attach manifest.json if it is not there
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          # Listed into a variable and matched with a here-string, NOT piped into grep -q.
+          # Under `set -o pipefail` a piped `grep -q` reports the pipeline as failed on a MATCH:
+          # grep exits the moment it finds the line, gh takes SIGPIPE, and the pipeline status
+          # becomes 141. The branch would then run backwards, uploading a second copy every time
+          # the asset was already there.
+          assets=$(gh release view "$TAG" --json assets --jq '.assets[].name')
+          if grep -qx 'manifest.json' <<< "$assets"; then
+            echo "manifest.json already attached"
+          else
+            echo "manifest.json missing, attaching it"
+            gh release upload "$TAG" app/manifest.json
+          fi
+
+      # The one asset this workflow cannot supply, so all it can do is say so loudly. A release
+      # with no APK is a release the library will offer and then fail to download.
+      - name: app-release.apk is attached
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          assets=$(gh release view "$TAG" --json assets --jq '.assets[].name')
+          if grep -qx 'app-release.apk' <<< "$assets"; then
+            echo "app-release.apk attached"
+          else
+            echo "::error::app-release.apk is not attached; upload the signed APK to $TAG"
+            exit 1
+          fi
