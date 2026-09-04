@@ -75,6 +75,20 @@ object FieldRenderer {
     // narrow widths lose the space between a label's words ("AVG VAM" reads as one), and its
     // light weights thin out. Oswald at one fixed size is the constant the tile is read by.
     private val LABEL_FONT = FontSetting(NumberFont.OSWALD, width = 100, weight = 700)
+    /**
+     * Pixels of the label's top clearance handed down to the number below it.
+     *
+     * The header's own height IS the row every number reserves -- render() applies it as the
+     * number's top view padding, and HudField sizes the zone pill from it -- so taking it off
+     * the top inset does three things at once: the label sits this much higher, the pill
+     * follows it, and the number gets exactly the space the label gave up. Anything that wants
+     * to change one of the three without the others is in the wrong place.
+     *
+     * Raw pixels rather than dp because it is a nudge, not a measurement: the label was sitting
+     * two pixels lower than it looked right at, on the screen this is drawn for.
+     */
+    private const val LABEL_LIFT_PX = 2
+
     private const val ICON_SCALE = 1.4f
     private const val ICON_GAP_DP = 3f
 
@@ -672,11 +686,25 @@ object FieldRenderer {
      * out 2px taller than the row it had to fit in -- enough to overlap the top of both numbers
      * on precisely the short tile the redesign exists to fix.
      */
-    internal fun headerHeight(context: Context): Int {
+    internal fun headerHeight(context: Context): Int =
+        (labelBand(context) + headerTopInset(context) + edgePadding(context)).toInt()
+
+    /**
+     * The band the icon and the label are centred in, before the insets above and below it.
+     * Icon-led, since [ICON_SCALE] draws the glyph taller than the capitals beside it.
+     */
+    private fun labelBand(context: Context): Float {
         val labelHeight = LABEL_HEIGHT_DP * context.resources.displayMetrics.density
-        val iconSize = (labelHeight * ICON_SCALE).toInt()
-        return (maxOf(iconSize.toFloat(), labelHeight) + 2 * edgePadding(context)).toInt()
+        return maxOf((labelHeight * ICON_SCALE).toInt().toFloat(), labelHeight)
     }
+
+    /**
+     * Clearance above the label: the edge padding every other side gets, less [LABEL_LIFT_PX].
+     * Floored at zero so a low-density screen cannot ask for a negative inset and draw the
+     * label off the top of its own bitmap.
+     */
+    internal fun headerTopInset(context: Context): Int =
+        (edgePadding(context) - LABEL_LIFT_PX).coerceAtLeast(0)
 
     /**
      * Icon plus short label, at a fixed dp size. The bitmap is exactly as wide as its content
@@ -724,9 +752,15 @@ object FieldRenderer {
         val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
 
-        // The bitmap is content-sized, so there is only one place the content can go.
+        // The bitmap is content-sized, so there is only one place the content can go
+        // horizontally. Vertically the content is centred in its BAND and the band is offset by
+        // the top inset, rather than centred in the whole bitmap: those are the same arithmetic
+        // until the inset stops matching the padding below it, which is exactly what
+        // LABEL_LIFT_PX does.
         val left = padding
-        val iconTop = ((h - iconSize) / 2f).toInt()
+        val top = headerTopInset(context)
+        val band = labelBand(context)
+        val iconTop = top + ((band - iconSize) / 2f).toInt()
         context.getDrawable(iconRes)?.mutate()?.apply {
             setTint(iconColor)
             setBounds(left.toInt(), iconTop, left.toInt() + iconSize, iconTop + iconSize)
@@ -739,7 +773,7 @@ object FieldRenderer {
             canvas,
             text,
             left + iconSize + iconGap,
-            baselineFor(h, bounds.height(), bounds.top),
+            top + baselineFor(band.toInt(), bounds.height(), bounds.top),
             paint,
             outlineColor,
         )

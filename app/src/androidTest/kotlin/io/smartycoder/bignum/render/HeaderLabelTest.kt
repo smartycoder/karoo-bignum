@@ -67,6 +67,31 @@ class HeaderLabelTest {
         assertEquals("header heights: $heights", 1, heights.size)
     }
 
+    /**
+     * The label sits nearer the top of its bitmap than the bottom, by exactly the lift.
+     *
+     * Measured rather than asserted against the constant, because the constant alone would pass
+     * on a version that shortened the bitmap without moving the ink -- which shifts the number
+     * up but leaves the label where it was, the opposite of the intent. The header's height IS
+     * the row the number reserves, so this asymmetry is also what the number gained.
+     *
+     * "HR" alone, for the same reason it is the reference above: it is the one label whose first
+     * glyph is flat at top AND bottom. Run against every label and this fails on "W/KG lap" by a
+     * pixel, because the slash drops below the baseline and eats one row of the clearance under
+     * it -- a fact about that glyph, not about the lift. The other labels are covered by
+     * [everyLabelIsDrawnAtTheSameCapHeightAndBaseline], which pins each of them to this one.
+     */
+    @Test
+    fun theLabelIsLiftedTowardsTheTopEdgeAndTheNumberGetsWhatItGaveUp() {
+        val expectedLift = FieldRenderer.edgePadding(context) - FieldRenderer.headerTopInset(context)
+        assertEquals("the lift the renderer thinks it applies", 2, expectedLift)
+        val bitmap = header("HR")
+        val ink = ink("HR")
+        val above = ink.top
+        val below = bitmap.height - 1 - ink.bottom
+        assertEquals("clearance below minus above", expectedLift, below - above)
+    }
+
     private data class Ink(val top: Int, val bottom: Int) {
         val height get() = bottom - top + 1
     }
