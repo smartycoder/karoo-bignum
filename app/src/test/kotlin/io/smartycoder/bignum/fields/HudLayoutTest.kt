@@ -1,6 +1,7 @@
 package io.smartycoder.bignum.fields
 
 import io.hammerhead.karooext.models.ViewConfig
+import io.smartycoder.bignum.ZonePillStyle
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -63,6 +64,11 @@ class HudLayoutTest {
 
     @Test
     fun `both slots inherit whatever alignment the parent has`() {
+        // Still true, and now load-bearing rather than incidental: the two labels are moved to
+        // opposite edges through renderInto's headerAlignment, NOT by handing a slot a different
+        // alignment here. That value also picks the number's scaleType, so a slot given LEFT
+        // would switch to fitStart and pin its digits to the top of its box while its neighbour
+        // kept fitEnd, leaving the two numbers on visibly different baselines.
         for (parentAlignment in listOf(
             ViewConfig.Alignment.LEFT,
             ViewConfig.Alignment.CENTER,
@@ -78,6 +84,26 @@ class HudLayoutTest {
                 halfConfig(parent, left = false, dividerPx = divider).alignment,
             )
         }
+    }
+
+    @Test
+    fun `each half's label goes to the tile's own outer edge`() {
+        // What the HUD passes as headerAlignment, spelled out here because it is the one thing
+        // about the two labels a JVM test can see: the rest of it is a Canvas away.
+        assertEquals(ViewConfig.Alignment.LEFT, hudHeaderAlignment(isLeft = true))
+        assertEquals(ViewConfig.Alignment.RIGHT, hudHeaderAlignment(isLeft = false))
+    }
+
+    @Test
+    fun `the pill style round-trips through its stored name`() {
+        // Mirrors ZoneColorMode's parsing test. The default is SEGMENTS and NOT the first entry
+        // by accident: an install that updates into this setting must not change appearance on
+        // its own, and an unreadable or absent value has to land there too.
+        for (style in ZonePillStyle.entries) {
+            assertEquals(style, ZonePillStyle.from(style.name))
+        }
+        assertEquals(null, ZonePillStyle.from("SPARKLES"))
+        assertEquals(null, ZonePillStyle.from(null))
     }
 
     @Test

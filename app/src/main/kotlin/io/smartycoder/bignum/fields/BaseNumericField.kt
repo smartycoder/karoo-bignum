@@ -173,10 +173,10 @@ abstract class BaseNumericField(
         frame: Frame,
         appearance: Appearance,
         inSlot: Boolean = false,
-        /** See [FieldRenderer.render]'s `iconOnlyHeader`; set by the HUD while its bar is up. */
+        /** See [FieldRenderer.render]'s `headerAlignment`; set by the HUD for each of its halves. */
+        headerAlignment: ViewConfig.Alignment? = null,
+        /** See [FieldRenderer.render]'s `iconOnlyHeader`; the HUD's narrow-tile fallback. */
         iconOnlyHeader: Boolean = false,
-        /** See [FieldRenderer.render]'s `overlayTopPx`; the HUD's bar height while it is up. */
-        overlayTopPx: Int = 0,
     ) {
         val visual = frame.visual
         val raised = appearance.raisedTail && raisedTailAllowed
@@ -187,8 +187,8 @@ abstract class BaseNumericField(
             tPrimary, tSecondary, primary, secondary, visual.color, appearance.font,
             visual.background, frame.wedge,
             roundCorners = !inSlot,
+            headerAlignment = headerAlignment,
             iconOnlyHeader = iconOnlyHeader,
-            overlayTopPx = overlayTopPx,
         )
     }
 
@@ -267,8 +267,21 @@ abstract class BaseNumericField(
         }
     }
 
-    /** One update of the HUD's zone bar: how full it is, its colour, and the value on it. */
-    internal data class BarFrame(val fraction: Float, val color: Int, val text: String)
+    /**
+     * One update of the HUD's zone pill: how many of its squares are lit, how many there are,
+     * its colour, and the value on it.
+     *
+     * [lit] and [segments] rather than a fraction, because the pill draws discrete zones. The bar
+     * this replaces divided its width equally per zone, so its fill already resolved to a zone
+     * number plus a wobble inside it; keeping the fraction would mean recomputing a position the
+     * pill has no way to show.
+     */
+    internal data class BarFrame(
+        val lit: Int,
+        val segments: Int,
+        val color: Int,
+        val text: String,
+    )
 
     /**
      * This field seen as the HUD's zone bar, or null whenever there is nothing honest to draw:
@@ -329,7 +342,8 @@ abstract class BaseNumericField(
         // for a whole ride promises information that is not coming.
         if (zones.isEmpty()) return null
         return BarFrame(
-            fraction = ZoneBar.fraction(raw, zones),
+            lit = ZoneBar.litSegments(raw, zones),
+            segments = zones.size,
             // Below the first zone there is no colour to look up, so the bar takes zone 1's --
             // the fill is zero-width there anyway, and the colour is what the icon and the value
             // are contrasted against.

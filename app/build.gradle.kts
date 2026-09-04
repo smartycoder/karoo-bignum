@@ -45,6 +45,19 @@ android {
             // than failing the build.
             signingConfig = signingConfigs.findByName("release")
         }
+        debug {
+            // The RELEASE key on a debug build, deliberately. The debug build exists to expose
+            // the test-mode switch, which Settings.testMode gates on BuildConfig.DEBUG -- and
+            // it carries the same applicationId as the release one. Signed with the default
+            // debug key it cannot install over a release build at all: the signatures differ,
+            // so `adb install -r` fails and the only way in is an uninstall, which takes the
+            // rider's field layout and settings with it. Sharing the key keeps the debug build
+            // a drop-in replacement in both directions.
+            //
+            // Null when keystore.properties is absent, which falls back to the ordinary debug
+            // key rather than failing the build -- the same reasoning as release above.
+            signingConfig = signingConfigs.findByName("release")
+        }
     }
 
     buildFeatures {

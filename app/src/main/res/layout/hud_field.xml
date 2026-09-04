@@ -42,22 +42,21 @@
           "Class not allowed to be inflated android.view.View" on the device while every JVM test
           still passed, because nothing off-device inflates this file.
 
-          Inset top and bottom by field_edge_padding rather than run edge to edge, and by that
-          resource rather than a literal because it is the same inset the renderer pads a field's
-          content with: the line then stops exactly where each half's content stops, instead of at
-          an arbitrary gap. Height is match_parent minus those margins, so it still tracks
-          whatever cell the tile is given.
+          EDGE TO EDGE, with no margins, and the top end is left to the pill rather than to a
+          margin. It used to be inset by field_edge_padding at both ends so the rule stopped where
+          each half's content stops; run to the edges it reads as the tile's own division rather
+          than as a floating tick.
 
-          The row runs the full height of the tile, so this line passes BEHIND the bar. That is
-          only safe because renderZoneBar paints an opaque ground before its translucent track:
-          without it this grey rule showed through the empty part of the bar and blinked in and
-          out as the fill crossed it.
+          The row runs the full height of the tile, so this line passes BEHIND the zone pill, and
+          the pill is opaque: with a bar configured the rule appears to begin just under it, and
+          with no bar it reaches the top edge. That is the whole of the rule's top behaviour, and
+          it needs no code. That is why renderZonePill painting an opaque ground before its
+          translucent track is load bearing rather than cosmetic. Without it this grey line showed
+          through the pill and blinked in and out.
         -->
         <ImageView
             android:layout_width="@dimen/hud_divider_width"
             android:layout_height="match_parent"
-            android:layout_marginTop="@dimen/field_edge_padding"
-            android:layout_marginBottom="@dimen/field_edge_padding"
             android:background="#808080"
             android:contentDescription="@null"/>
 
@@ -69,15 +68,24 @@
     </LinearLayout>
 
     <!--
-      scaleType is fitXY and not the default, and that is a contract rather than a preference:
-      the bar is drawn at exactly this view's pixel size, and fitCenter would letterbox it and put
-      the fill's edge somewhere other than where the value says it is.
+      The zone pill. wrap_content and scaleType="center", NOT match_parent with fitXY: the bitmap
+      is drawn at exactly the size it wants to occupy, so any scaling here would be the view
+      second-guessing arithmetic that already accounts for the icon, the squares and the value.
+      fitXY on a content-sized pill stretched a 250px lozenge across the whole tile.
+
+      top|center_horizontal puts it in the middle of the header row, where it straddles the
+      divider between the two halves and has the space between the two labels to itself.
+
+      It sits INSIDE the row both slots already reserve for their header, so it takes no height
+      from either number. That is the whole reason the previous full-width bar had to be laid
+      over the tile and reasoned about with an overlay, and this one does not.
     -->
     <ImageView android:id="@+id/hud_bar"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/hud_bar_height"
-        android:layout_gravity="top"
-        android:scaleType="fitXY"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="@dimen/hud_pill_inset"
+        android:scaleType="center"
         android:visibility="gone"
         android:contentDescription="@null"/>
 

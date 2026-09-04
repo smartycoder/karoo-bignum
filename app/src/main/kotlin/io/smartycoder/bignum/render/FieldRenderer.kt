@@ -15,6 +15,8 @@ import android.widget.RemoteViews
 import kotlin.math.ceil
 import java.util.concurrent.ConcurrentHashMap
 import io.smartycoder.bignum.FontSetting
+import android.util.Log
+import io.smartycoder.bignum.BuildConfig
 import io.smartycoder.bignum.NumberFont
 import io.smartycoder.bignum.R
 import io.smartycoder.bignum.fields.Wedge
@@ -75,28 +77,6 @@ object FieldRenderer {
     private val LABEL_FONT = FontSetting(NumberFont.OSWALD, width = 100, weight = 700)
     private const val ICON_SCALE = 1.4f
     private const val ICON_GAP_DP = 3f
-
-    /**
-     * The icon's height when it is the whole header, with no label beside it.
-     *
-     * Smaller than the 15.5dp an icon gets in a full header, and deliberately so: with a label
-     * next to it the icon is half of a caption and is sized to hold its own against the words;
-     * alone under the HUD's bar it is a mark saying which half is which, read once and then
-     * ignored. At the full size it crowded a wide value -- a three-digit power fills its half
-     * edge to edge, and the icon met the first digit.
-     */
-    private const val ICON_ONLY_HEIGHT_DP = 11f
-
-    /**
-     * Inset of that icon from the tile's top and start edges, as a share of [edgePadding] -- a
-     * fraction rather than its own dp value, so it cannot drift away from the padding it is
-     * defined as half of.
-     *
-     * Half is what the number and a full header keep: a mark belongs in the corner, and the
-     * number's own padding is what keeps the two apart, so the icon can sit closer to the edge
-     * than the content it is labelling without touching it.
-     */
-    private const val ICON_ONLY_PADDING_FRACTION = 0.5f
 
     /**
      * Breathing room around a field's content, in pixels.
@@ -290,22 +270,6 @@ object FieldRenderer {
         (boxHeight - inkHeight) / 2f - inkTop
 
     /**
-     * Where the top edge of a raster of [inkHeight] lands inside a box of [boxHeight], for the
-     * fit* scaleType [alignment] selects.
-     *
-     * Mirrors what the ImageView does rather than deciding anything: fitStart puts the raster at
-     * the top, fitCenter centres it, fitEnd puts it at the bottom. Pure, so the one question that
-     * depends on it -- whether a number would end up under the HUD's zone bar -- can be checked
-     * without a Canvas.
-     */
-    internal fun inkTopFor(alignment: Alignment, boxHeight: Int, inkHeight: Int): Int =
-        when (alignment) {
-            Alignment.LEFT -> 0
-            Alignment.CENTER -> (boxHeight - inkHeight) / 2
-            Alignment.RIGHT -> boxHeight - inkHeight
-        }.coerceAtLeast(0)
-
-    /**
      * Puts the chosen face on [this]. A Paint copy (the secondary number) inherits both the
      * typeface and the feature settings, so the superscript comes out in step with the primary.
      *
@@ -356,24 +320,23 @@ object FieldRenderer {
          */
         roundCorners: Boolean = true,
         /**
-         * True when the header is reduced to its icon, with no label beside it. The HUD's slots
-         * use it while the zone bar is up: the bar has taken the row the two labels were read
-         * from, and a label repeated under it would say twice what the tile already says once.
+         * Which edge the HEADER is pinned to, when that is not the edge the number uses.
+         *
+         * Null means the two agree, which is every field but a HUD slot. The HUD overrides it so
+         * the left half's label sits at the tile's left edge and the right half's at its right,
+         * making the two read as one row rather than as two fields that happen to be adjacent.
+         * It cannot be done by handing the slot a different [ViewConfig.alignment], because that
+         * value also picks the number's scaleType -- a slot given LEFT would switch to fitStart
+         * and pin its digits to the top of its box while its neighbour kept fitEnd, leaving the
+         * two numbers on visibly different baselines.
+         */
+        headerAlignment: Alignment? = null,
+        /**
+         * Draw the header as its icon alone. The HUD uses it on a tile too narrow to hold two
+         * labels beside its zone pill: an icon-only header is about a third the width and exactly
+         * the same height, so it buys room sideways and changes nothing vertically.
          */
         iconOnlyHeader: Boolean = false,
-        /**
-         * Height of something drawn OVER the top of this view that the content has to stay clear
-         * of -- the HUD's zone bar, and nothing else so far.
-         *
-         * It is not subtracted from the view's height, and that is the point: the bar is a
-         * sibling laid on top rather than a row above, so the number keeps the whole tile and
-         * gives up height only in the cases where it would actually end up underneath the bar.
-         * On a right-aligned field it never does, because fitEnd pins the raster to the bottom.
-         *
-         * When it does give up height, it gives up this PLUS the ordinary edge padding, so the
-         * gap under the bar matches the gap at the other three edges.
-         */
-        overlayTopPx: Int = 0,
     ) {
         // The header comes first because the number's box is what it leaves behind. It is cached
         // and depends on nothing the number does, so this is a reorder rather than extra work.
@@ -391,10 +354,10 @@ object FieldRenderer {
         // the header above it and pads the other three sides; see numeric_field.xml.
         val (viewWidth, viewHeight) = config.viewSize
         val boxWidth = viewWidth - 2 * pad
-        // An icon-only header does not reserve a band up front: it is a mark in the corner, and
-        // the number's raster is normally short enough to leave it alone. See headerPad below
-        // for the two cases where it is not, which are the ones that buy the band back.
-        val fullBox = viewHeight - pad - (if (iconOnlyHeader) 0 else header.height)
+        // The header always takes its own height off the top, and the number always gets that
+        // back as VIEW padding below. That pairing is what makes the clearance survive a
+        // [ViewConfig.viewSize] that does not match the view -- see [render]'s note on it.
+        val fullBox = viewHeight - pad - header.height
 
         val numberPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             applyFont(context, font)
@@ -425,35 +388,29 @@ object FieldRenderer {
             )?.also { metricsCache[key] = it }
         }
 
-        var metrics = measured(fullBox) ?: return
-        // How much room comes off the top of the number.
+        val metrics = measured(fullBox) ?: return
+        // The header's own height, always, and applied below as VIEW padding rather than as a
+        // reservation computed from the reported view size.
         //
-        // A full header always takes its own height, as it always has. An icon-only header takes
-        // NOTHING for itself -- the icon is a mark in the corner, drawn over the tile rather than
-        // above it -- and gives up height only to an overlay the number would otherwise sit
-        // under. Where the raster lands decides that, and it depends on the alignment: fitEnd
-        // pins it to the bottom, so a right-aligned number never meets the bar and never pays;
-        // fitCenter leaves half the slack above it; fitStart pins it to the top, so it always
-        // pays. The re-measure means the number is drawn at the size it ends up shown at rather
-        // than being scaled down by the view afterwards.
-        // The overlay PLUS the ordinary edge padding, not the bare overlay. Every other side of
-        // a field is inset by `pad`, and a full header carries that inset inside its own bitmap,
-        // so the number below it gets air for free. An icon-only header has no bitmap under the
-        // bar, so reserving the bar's bare height left the digits touching it: measured in the
-        // Karoo 3 page editor at 478x148, the bar ended at row 108 and the digits began at 109.
-        // Nothing was clipped, and it still read as clipped.
-        //
-        // Clamped to half the box: a reservation taller than the room it sits over would leave
-        // the number a negative budget, and measure() would hand back nothing at all.
-        val overlay = (overlayTopPx + pad).coerceIn(0, (fullBox / 2).coerceAtLeast(0))
-        val headerPad = when {
-            !iconOnlyHeader -> header.height
-            inkTopFor(config.alignment, fullBox, metrics.height) >= overlay -> 0
-            // Falls back to the metrics already in hand rather than returning: a `return` here
-            // draws NOTHING, and an empty half is a worse answer than a number the bar clips a
-            // little. The view's fit* then scales what we measured for the taller box, which is
-            // the same degradation every other over-tight tile in this renderer gets.
-            else -> measured(fullBox - overlay)?.let { metrics = it; overlay } ?: 0
+        // The distinction is the whole reason the previous version failed. It reserved room only
+        // when arithmetic over ViewConfig.viewSize said the number would otherwise land under the
+        // HUD's bar -- and on a Karoo 3 map page that value is a phantom: measured 239x228
+        // reported against a tile actually drawn at ~237x165. The reservation was therefore
+        // decided for a tile that does not exist (inkTop came out 80 against a 58px bar and the
+        // reservation never fired at all), and fitEnd then rescaled the raster into the real
+        // view and pinned it to the bottom, leaving the digits flush against the bar with zero
+        // clearance. View padding is applied by the framework in the view's OWN space, so a wrong
+        // viewSize can shrink the number but can never push it under the header.
+        val headerPad = header.height
+        // TEMPORARY DIAGNOSTIC -- remove once the fix is confirmed on the device. This is the
+        // only instrument that shows the reported size next to what is drawn from it.
+        if (BuildConfig.DEBUG) {
+            Log.i(
+                "BigNumDiag",
+                "label=$label view=${viewWidth}x$viewHeight pad=$pad hdr=${header.height} " +
+                    "fullBox=$fullBox ink=${metrics.height} headerPad=$headerPad " +
+                    "align=${config.alignment} hdrAlign=${headerAlignment ?: config.alignment}",
+            )
         }
         numberPaint.textSize = metrics.textSize
         secondaryPaint.textSize = metrics.textSize * SECONDARY_SCALE
@@ -558,30 +515,31 @@ object FieldRenderer {
         }
         views.setImageViewBitmap(target, bitmap)
 
-        // The header is aligned by the layout, so pick the copy sitting at the right edge. The
-        // icon-only header ignores that and always takes the start corner: it is a mark, not a
-        // caption, and it belongs in the same corner on both halves of a HUD so the tile reads as
-        // one row of two rather than as two fields that happen to be adjacent.
-        val headerTarget = when {
-            iconOnlyHeader -> R.id.header_start
-            config.alignment == Alignment.LEFT -> R.id.header_start
-            config.alignment == Alignment.CENTER -> R.id.header_center
-            else -> R.id.header_end
+        // The header is aligned by the layout, so pick the copy sitting at the right edge --
+        // [headerAlignment] when the caller wants it somewhere other than where the number is.
+        val headerTarget = when (headerAlignment ?: config.alignment) {
+            Alignment.LEFT -> R.id.header_start
+            Alignment.CENTER -> R.id.header_center
+            Alignment.RIGHT -> R.id.header_end
         }
         for (id in HEADER_IDS) {
             views.setViewVisibility(id, if (id == headerTarget) View.VISIBLE else View.GONE)
         }
-        // The icon is drawn over the tile, so on its own it would land underneath the bar. View
-        // padding rather than a taller bitmap: the bitmap is cached across every field that
-        // shares a header, and baking an offset into it would key that cache on the overlay too.
-        // Zero whenever there is no overlay, which is every field but a HUD slot under its bar.
+        // Zero top padding, written EXPLICITLY and to every header id rather than simply not
+        // written at all. Two separate reasons, and both bite:
         //
-        // Written to EVERY header id, the way BITMAP_IDS already is, and not only to the target:
-        // RemoteViews actions are replayed onto views the host has already inflated, so padding
-        // left on a copy that is GONE today comes back with it -- turn the bar off, or change the
-        // alignment, and that header reappears pushed a bar's height down the tile.
+        // The header bitmap already carries its own edge padding, so anything added here is that
+        // inset counted twice. The previous version added `overlayTopPx + pad`, which is `pad`
+        // even for a field with no overlay at all -- every one of them, since only the HUD ever
+        // passed an overlay -- and its comment claimed the value was zero in that case. Measured
+        // on a Karoo 3, that put the label 20px below the tile's top edge where the 5dp inset
+        // every other edge uses is 11.
+        //
+        // Explicitly, because RemoteViews actions are replayed onto views the host has already
+        // inflated: a view carrying padding from a previous version of this code keeps it until
+        // something overwrites it, including a copy that is GONE today and comes back later.
         for (id in HEADER_IDS) {
-            views.setViewPadding(id, 0, if (id == headerTarget) overlay else 0, 0, 0)
+            views.setViewPadding(id, 0, 0, 0, 0)
         }
         // A fresh RemoteViews per update means this has to repeat even though the bitmap is
         // cached -- only the drawing is saved, not the transfer.
@@ -659,11 +617,65 @@ object FieldRenderer {
         labelColor: Int,
         iconColor: Int,
         outline: Boolean,
-        iconOnly: Boolean = false,
+        iconOnly: Boolean,
     ): Bitmap = headerCache.getOrPut(
         HeaderKey(label, iconRes, labelColor, iconColor, outline, iconOnly),
     ) {
         renderHeader(context, label, iconRes, labelColor, iconColor, outline, iconOnly)
+    }
+
+    /**
+     * The label's Paint, at the size that makes its CAPITALS [LABEL_HEIGHT_DP] tall.
+     *
+     * Measured on a capital rather than on the label, and the label drawn in capitals. Scaling
+     * each label's own ink to the target made the size depend on which glyphs it happened to
+     * contain: "TIME lap" reaches from the cap line to the "p"'s tail, so its capitals came out a
+     * fifth shorter than "HR"'s to keep the whole ink at 11dp, and centring that taller ink
+     * pushed them off the line every other label sat on.
+     */
+    private fun labelPaint(context: Context): Paint {
+        val labelHeight = LABEL_HEIGHT_DP * context.resources.displayMetrics.density
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            applyFont(context, LABEL_FONT)
+            textSize = labelHeight
+        }
+        val bounds = Rect()
+        paint.getTextBounds(CAP_REFERENCE, 0, CAP_REFERENCE.length, bounds)
+        if (bounds.height() > 0) paint.textSize = labelHeight * labelHeight / bounds.height()
+        return paint
+    }
+
+    /**
+     * How wide a header bitmap is for [label] -- icon, gap, the label itself and the edge padding
+     * on both sides.
+     *
+     * Reachable from outside because the HUD has to know how much of its width the two labels
+     * claim before it can decide whether its zone pill fits between them.
+     */
+    internal fun headerWidth(context: Context, label: String, iconOnly: Boolean = false): Int {
+        val density = context.resources.displayMetrics.density
+        val labelHeight = LABEL_HEIGHT_DP * density
+        val iconSize = (labelHeight * ICON_SCALE).toInt()
+        val pad = 2 * edgePadding(context)
+        if (iconOnly) return iconSize + pad
+        val labelWidth = labelPaint(context).measureText(label.uppercase())
+        return (iconSize + ICON_GAP_DP * density + labelWidth + pad).toInt()
+    }
+
+    /**
+     * How tall a header bitmap is. The same for every field, because it follows the icon and the
+     * fixed label size and neither depends on the label's text.
+     *
+     * Public to this package because the HUD's zone pill has to sit inside the header's row, and
+     * a second spelling of this arithmetic is exactly the kind that drifts: `(11.07 * density *
+     * 1.4).toInt()` truncates where a dp resource rounds, so a pill sized from a 26dp dimen came
+     * out 2px taller than the row it had to fit in -- enough to overlap the top of both numbers
+     * on precisely the short tile the redesign exists to fix.
+     */
+    internal fun headerHeight(context: Context): Int {
+        val labelHeight = LABEL_HEIGHT_DP * context.resources.displayMetrics.density
+        val iconSize = (labelHeight * ICON_SCALE).toInt()
+        return (maxOf(iconSize.toFloat(), labelHeight) + 2 * edgePadding(context)).toInt()
     }
 
     /**
@@ -679,46 +691,35 @@ object FieldRenderer {
         labelColor: Int,
         iconColor: Int,
         outline: Boolean,
+        /**
+         * Drop the label and keep the icon. WIDTH only: the bitmap stays exactly as tall as a
+         * full header, so the row every number reserves below it is unchanged. An earlier
+         * icon-only header also gave up its HEIGHT and left the clearance to arithmetic over
+         * ViewConfig.viewSize, which on this device is a phantom -- that is the bug this must not
+         * reintroduce.
+         */
         iconOnly: Boolean = false,
     ): Bitmap {
         val density = context.resources.displayMetrics.density
         val labelHeight = LABEL_HEIGHT_DP * density
-        val iconSize =
-            if (iconOnly) (ICON_ONLY_HEIGHT_DP * density).toInt()
-            else (labelHeight * ICON_SCALE).toInt()
+        val iconSize = (labelHeight * ICON_SCALE).toInt()
         val iconGap = ICON_GAP_DP * density
-        val full = edgePadding(context).toFloat()
-        val padding = if (iconOnly) full * ICON_ONLY_PADDING_FRACTION else full
+        val padding = edgePadding(context).toFloat()
 
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            applyFont(context, LABEL_FONT)
+        val paint = labelPaint(context).apply {
             color = labelColor
             isSubpixelText = true
-            textSize = labelHeight
         }
-        // Measured on a capital rather than on the label, and the label drawn in capitals.
-        // Scaling each label's own ink to the target made the size depend on which glyphs it
-        // happened to contain: "TIME lap" reaches from the cap line to the "p"'s tail, so its
-        // capitals came out a fifth shorter than "HR"'s to keep the whole ink at 11dp, and
-        // centring that taller ink pushed them off the line every other label sat on.
         val bounds = Rect()
         paint.getTextBounds(CAP_REFERENCE, 0, CAP_REFERENCE.length, bounds)
-        if (bounds.height() > 0) {
-            paint.textSize = labelHeight * labelHeight / bounds.height()
-            paint.getTextBounds(CAP_REFERENCE, 0, CAP_REFERENCE.length, bounds)
-        }
 
-        // The gap goes with the label: an icon on its own is padded like everything else, and
-        // carrying a gap for a label that is not drawn would push it off the corner it is meant
-        // to sit in.
         val text = if (iconOnly) "" else label.uppercase()
-        val labelWidth = if (iconOnly) 0f else paint.measureText(text)
-        val contentWidth = if (iconOnly) iconSize.toFloat() else iconSize + iconGap + labelWidth
-        val w = (contentWidth + 2 * padding).toInt()
-        // The label's own height is out of it when there is no label: keeping maxOf here would
-        // hold the bitmap at the 11dp label height and undo the smaller icon entirely.
-        val contentHeight = if (iconOnly) iconSize.toFloat() else maxOf(iconSize.toFloat(), labelHeight)
-        val h = (contentHeight + 2 * padding).toInt()
+        // Through headerWidth and headerHeight rather than spelled out again: the HUD reserves
+        // room for two of these before it decides how wide its zone pill may be, and two
+        // independent copies of this arithmetic drifting apart is how the pill ends up over a
+        // label it was measured to clear.
+        val w = headerWidth(context, label, iconOnly)
+        val h = headerHeight(context)
 
         val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)

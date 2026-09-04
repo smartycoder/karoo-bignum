@@ -29,6 +29,20 @@
     <dimen name="field_edge_padding">5dp</dimen>
 
     <!--
+      How far the zone pill is inset from the top and bottom of the header row it sits in, so it
+      reads as a lozenge laid in that row rather than as a block filling it.
+
+      In px and not dp, for the same reason hud_divider_width is: this is a hairline of breathing
+      room, and it is one pixel on every screen rather than something that thickens with density.
+
+      BOTH sides need it, which is why it is a resource: hud_field.xml uses it as the pill's top
+      margin, and HudField subtracts TWICE it from the header height to size the bitmap. A literal
+      in one place and a constant in the other is how the gap at the bottom ends up different from
+      the gap at the top.
+    -->
+    <dimen name="hud_pill_inset">1px</dimen>
+
+    <!--
       The hairline between the HUD's two halves, in px rather than dp on purpose: it is a rule,
       and a rule is one pixel on every screen rather than something that thickens with density.
 
