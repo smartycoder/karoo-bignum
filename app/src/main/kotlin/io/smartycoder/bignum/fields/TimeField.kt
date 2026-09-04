@@ -17,6 +17,9 @@ class TimeField(
     override val upstreamTypeId: String,
     override val label: String,
     override val previewValue: Double,
+    // Null reads the stream's singleValue. A duration that ships alongside other fields --
+    // time to destination, riding with the route flags -- names the one it wants instead.
+    override val valueField: String? = null,
     // The ride clock opts out: it is the one value that is real and moving with no sensor
     // paired, and watching it run is how you tell a live field from a frozen one, so a frozen
     // demo time there makes a screenshot look broken rather than staged.

@@ -25,10 +25,16 @@ object FieldCatalog {
     internal const val SUNRISE_PREVIEW = 24_120.0
     internal const val SUNSET_PREVIEW = 73_080.0
 
+    /** The wall clock's preview, on the same footing as the two above it: 14:35. */
+    internal const val CLOCK_PREVIEW = 52_500.0
+
     fun build(extension: String, karoo: KarooSystemService): List<BaseNumericField> {
         return listOf(
             // Speed
             SpeedField(extension, "speed", karoo, DataType.Type.SPEED, "SPEED", previewValue = 9.7),
+            SpeedField(extension, "speed3s", karoo, DataType.Type.SMOOTHED_3S_AVERAGE_SPEED, "SPEED 3s", previewValue = 9.4),
+            SpeedField(extension, "speed5s", karoo, DataType.Type.SMOOTHED_5S_AVERAGE_SPEED, "SPEED 5s", previewValue = 9.2),
+            SpeedField(extension, "speed10s", karoo, DataType.Type.SMOOTHED_10S_AVERAGE_SPEED, "SPEED 10s", previewValue = 9.0),
             SpeedField(extension, "avgSpeed", karoo, DataType.Type.AVERAGE_SPEED, "AVG SPEED", previewValue = 7.9),
             SpeedField(extension, "maxSpeed", karoo, DataType.Type.MAX_SPEED, "MAX SPEED", previewValue = 17.4),
 
@@ -46,6 +52,9 @@ object FieldCatalog {
 
             // Cadence
             CadenceField(extension, karoo),
+            SimpleField(extension, "cadence3s", karoo, DataType.Type.SMOOTHED_3S_AVERAGE_CADENCE, "CAD 3s", R.drawable.ic_cadence, Formatters.rpm, previewValue = 90.0),
+            SimpleField(extension, "cadence5s", karoo, DataType.Type.SMOOTHED_5S_AVERAGE_CADENCE, "CAD 5s", R.drawable.ic_cadence, Formatters.rpm, previewValue = 89.0),
+            SimpleField(extension, "cadence10s", karoo, DataType.Type.SMOOTHED_10S_AVERAGE_CADENCE, "CAD 10s", R.drawable.ic_cadence, Formatters.rpm, previewValue = 87.0),
             SimpleField(extension, "avgCadence", karoo, DataType.Type.AVERAGE_CADENCE, "AVG CAD", R.drawable.ic_cadence, Formatters.rpm, previewValue = 84.0),
             SimpleField(extension, "maxCadence", karoo, DataType.Type.MAX_CADENCE, "MAX CAD", R.drawable.ic_cadence, Formatters.rpm, previewValue = 112.0),
 
@@ -60,6 +69,7 @@ object FieldCatalog {
             PowerField(extension, "power1hr", karoo, DataType.Type.SMOOTHED_1HR_AVERAGE_POWER, "PWR 1hr", previewValue = 228.0),
             PowerField(extension, "avgPower", karoo, DataType.Type.AVERAGE_POWER, "AVG PWR", previewValue = 214.0),
             PowerField(extension, "maxPower", karoo, DataType.Type.MAX_POWER, "MAX PWR", previewValue = 812.0),
+            SimpleField(extension, "percentMaxFtp", karoo, DataType.Type.PERCENT_MAX_FTP, "%FTP", R.drawable.ic_bolt, Formatters.percent, previewValue = 78.0),
             PowerField(extension, "np", karoo, DataType.Type.NORMALIZED_POWER, "NP", previewValue = 231.0),
             PowerToWeightField(extension, karoo),
             // previewValue is in watts; at the demo profile's 70 kg these render 3.4 and 3.5.
@@ -85,6 +95,7 @@ object FieldCatalog {
             SpeedField(extension, "lapSpeed", karoo, DataType.Type.AVERAGE_SPEED_LAP, "SPEED lap", previewValue = 8.3),
             SpeedField(extension, "lapMaxSpeed", karoo, DataType.Type.MAX_SPEED_LAP, "MAX SPEED lap", previewValue = 15.2),
             SimpleField(extension, "lapHr", karoo, DataType.Type.AVERAGE_LAP_HR, "HR lap", R.drawable.ic_heart, Formatters.bpm, zoneKind = ZoneKind.HR, previewValue = 152.0),
+            SimpleField(extension, "lapMaxHr", karoo, DataType.Type.MAX_HR_LAP, "MAX HR lap", R.drawable.ic_heart, Formatters.bpm, zoneKind = ZoneKind.HR, previewValue = 171.0),
             SimpleField(extension, "lapCadence", karoo, DataType.Type.CADENCE_LAP, "CAD lap", R.drawable.ic_cadence, Formatters.rpm, previewValue = 87.0),
             SimpleField(extension, "lapMaxCadence", karoo, DataType.Type.MAX_CADENCE_LAP, "MAX CAD lap", R.drawable.ic_cadence, Formatters.rpm, previewValue = 104.0),
             PowerField(extension, "lapPower", karoo, DataType.Type.POWER_LAP, "PWR lap", previewValue = 226.0),
@@ -102,14 +113,23 @@ object FieldCatalog {
             // rather than left to singleValue; see BaseNumericField.valueField.
             SimpleField(extension, "distanceToDestination", karoo, DataType.Type.DISTANCE_TO_DESTINATION, "TO DEST", R.drawable.ic_distance, Formatters.distance, needsProfile = true, valueField = DataType.Field.DISTANCE_TO_DESTINATION, previewValue = 18_600.0),
             SimpleField(extension, "distanceToNextTurn", karoo, DataType.Type.DISTANCE_TO_NEXT_TURN, "TO TURN", R.drawable.ic_distance, Formatters.distance, needsProfile = true, valueField = DataType.Field.DISTANCE_TO_NEXT_TURN, previewValue = 450.0),
+            // 39 minutes: the 18.6 km the field above previews, at the demo average speed, so
+            // the three navigation fields tell one story in a screenshot.
+            TimeField(extension, "timeToDestination", karoo, DataType.Type.TIME_TO_DESTINATION, "TIME TO DEST", previewValue = 2_360_000.0, valueField = DataType.Field.TIME_TO_DESTINATION),
             SimpleField(extension, "timeOfArrival", karoo, DataType.Type.TIME_OF_ARRIVAL, "ETA", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", raisedTailAllowed = false, previewValue = 1_787_495_700_000.0),
 
             // Time and environment
             TimeField(extension, "elapsed", karoo, DataType.Type.ELAPSED_TIME, "TIME", previewValue = 5_073_000.0, demoInTestMode = false),
+            // Shorter than the elapsed time above it by the length of a coffee stop.
+            TimeField(extension, "rideTime", karoo, DataType.Type.RIDE_TIME, "RIDE TIME", previewValue = 4_712_000.0, demoInTestMode = false),
+            // The wall clock opts out of the demo value for the reason the ride clock does: it
+            // runs with nothing paired, so a frozen one reads as a broken field.
+            SimpleField(extension, "clockTime", karoo, DataType.Type.CLOCK_TIME, "CLOCK", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", raisedTailAllowed = false, previewValue = CLOCK_PREVIEW, demoInTestMode = false),
             // Both keep the ETA's treatment -- a 24-hour wall clock drawn whole, no raised tail.
             SimpleField(extension, "sunrise", karoo, DataType.Type.SUNRISE, "SUNRISE", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", raisedTailAllowed = false, previewValue = SUNRISE_PREVIEW),
             SimpleField(extension, "sunset", karoo, DataType.Type.SUNSET, "SUNSET", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", raisedTailAllowed = false, previewValue = SUNSET_PREVIEW),
             TemperatureField(extension, karoo),
+            SimpleField(extension, "battery", karoo, DataType.Type.BATTERY_PERCENT, "BATTERY", R.drawable.ic_battery, Formatters.percent, previewValue = 64.0),
         )
     }
 }

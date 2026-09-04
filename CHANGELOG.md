@@ -14,6 +14,19 @@ Karoo shows in its own update flow.
   drawn whole rather than with raised minutes, the way Nav - ETA already is. The Karoo works
   the two times out from where you are, so they stay at `--` until it has a position fix.
 
+- Twelve more fields, each filling a gap rather than adding a variant for its own sake:
+  **Clock** (the plain time of day, which the ETA and the two sun times had left oddly missing),
+  **Time - Riding** (moving time, against the elapsed time that counts the stops too),
+  **Nav - Time to Destination** (how long is left, beside the distance and the arrival clock
+  that were already there), **Power - % of FTP** (what HR - % of Max is to heart rate),
+  **Lap - Max HR** (the lap group had a maximum for speed, cadence and power but not heart
+  rate), **Battery**, and smoothed **Speed** and **Cadence** at 3s, 5s and 10s -- power has
+  carried six smoothed variants all along and neither of these had one.
+
+- Each field now also carries a test that it is declared in `extension_info.xml`, which is the
+  list the Karoo actually builds its picker from. A field missing there compiles and streams
+  and simply never shows up, so the two hand-kept lists had nothing holding them together.
+
 ## [1.3.1] - 2026-09-02
 
 ### Fixed
