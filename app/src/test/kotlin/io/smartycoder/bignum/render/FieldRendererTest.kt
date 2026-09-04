@@ -83,37 +83,4 @@ class FieldRendererTest {
         assertEquals(1f, FieldRenderer.shrinkFactor(0f, 157f, 220), 0.0001f)
     }
 
-    // inkTopFor is what decides whether a number ends up under the HUD's zone bar, and so
-    // whether it gives up height to it. Getting it wrong is not a crash: it is either a number
-    // hidden behind the bar, or every number needlessly smaller than it has to be.
-
-    @Test
-    fun `a left-aligned raster starts at the top of its box`() {
-        // fitStart, so there is never room above it and a bar always costs it height.
-        assertEquals(0, FieldRenderer.inkTopFor(Alignment.LEFT, 200, 100))
-        assertEquals(0, FieldRenderer.inkTopFor(Alignment.LEFT, 200, 200))
-    }
-
-    @Test
-    fun `a centred raster keeps half the slack above it`() {
-        assertEquals(50, FieldRenderer.inkTopFor(Alignment.CENTER, 200, 100))
-        assertEquals(0, FieldRenderer.inkTopFor(Alignment.CENTER, 200, 200))
-    }
-
-    @Test
-    fun `a right-aligned raster keeps all the slack above it`() {
-        // fitEnd pins it to the bottom, which is why a right-aligned number pays nothing for the
-        // bar until it is tall enough to fill the tile on its own.
-        assertEquals(100, FieldRenderer.inkTopFor(Alignment.RIGHT, 200, 100))
-        assertEquals(0, FieldRenderer.inkTopFor(Alignment.RIGHT, 200, 200))
-    }
-
-    @Test
-    fun `a raster taller than its box never reports a negative top`() {
-        // measure() clamps the text size, so this is a degenerate tile rather than a real case --
-        // but a negative top would compare as "clears the bar" and hide the number under it.
-        for (alignment in Alignment.entries) {
-            assertEquals(0, FieldRenderer.inkTopFor(alignment, 100, 140))
-        }
-    }
 }

@@ -109,6 +109,10 @@
     <string name="setting_zone_mode_text">Number</string>
     <string name="setting_zone_mode_fill">Field background</string>
     <string name="setting_zone_colors_desc">Color heart rate and power by your Karoo zones. Number colors the value itself; Field background fills the whole field and sets the number in black or white.</string>
+    <string name="setting_zone_pill_style">Zone pill style</string>
+    <string name="setting_zone_pill_segments">Zone squares</string>
+    <string name="setting_zone_pill_solid">Solid color</string>
+    <string name="setting_zone_pill_style_desc">How the HUD field\'s zone pill is drawn. Zone squares shows one square per zone with everything up to your current one lit; Solid color fills the pill with the zone color instead. On a narrow field the squares are dropped, and if even the solid pill will not fit beside both labels it is hidden.</string>
     <string name="setting_font">Font</string>
     <string name="setting_font_oswald">Oswald</string>
     <string name="setting_font_saira">Saira</string>

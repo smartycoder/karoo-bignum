@@ -25,6 +25,25 @@ enum class ZoneColorMode {
     }
 }
 
+/**
+ * How the HUD's zone pill draws itself.
+ *
+ * Only the pill's own look; which field drives it is a separate setting, and whether it appears
+ * at all still follows [ZoneColorMode].
+ */
+enum class ZonePillStyle {
+    /** One square per zone, everything up to the current one lit. Counts at a glance. */
+    SEGMENTS,
+
+    /** No squares: the whole pill takes the zone colour, with the icon and value laid on it. */
+    SOLID,
+    ;
+
+    companion object {
+        fun from(name: String?): ZonePillStyle? = entries.firstOrNull { it.name == name }
+    }
+}
+
 /** Typeface the numbers and headers are drawn in. */
 enum class NumberFont {
     /** Static Bold, no axes: [FontSetting.width] and [FontSetting.weight] do not apply. */
@@ -104,6 +123,8 @@ object Settings {
     /** What a fresh install's HUD field shows in each slot. Internal so a test can hold it to that. */
     internal val DEFAULT_SLOTS = "speed" to "hr"
 
+    private const val KEY_ZONE_PILL_STYLE = "zone_pill_style"
+
     /** Replaced by [KEY_ZONE_COLOR_MODE]; still read once so an existing install keeps its choice. */
     private const val LEGACY_KEY_ZONE_COLORS = "zone_colors"
 
@@ -130,6 +151,18 @@ object Settings {
 
     fun setZoneColorMode(context: Context, mode: ZoneColorMode) {
         prefs(context).edit().putString(KEY_ZONE_COLOR_MODE, mode.name).apply()
+    }
+
+    /**
+     * Defaults to [ZonePillStyle.SEGMENTS], which is what the pill looked like before this
+     * setting existed: an install that updates into it must not change appearance on its own.
+     */
+    fun zonePillStyle(context: Context): ZonePillStyle =
+        ZonePillStyle.from(prefs(context).getString(KEY_ZONE_PILL_STYLE, null))
+            ?: ZonePillStyle.SEGMENTS
+
+    fun setZonePillStyle(context: Context, style: ZonePillStyle) {
+        prefs(context).edit().putString(KEY_ZONE_PILL_STYLE, style.name).apply()
     }
 
     /**
@@ -254,6 +287,9 @@ object Settings {
 
     fun zoneColorModeFlow(context: Context): Flow<ZoneColorMode> =
         prefFlow(context, setOf(KEY_ZONE_COLOR_MODE), ::zoneColorMode)
+
+    fun zonePillStyleFlow(context: Context): Flow<ZonePillStyle> =
+        prefFlow(context, setOf(KEY_ZONE_PILL_STYLE), ::zonePillStyle)
 
     fun testModeFlow(context: Context): Flow<Boolean> = prefFlow(context, setOf(KEY_TEST_MODE), ::testMode)
 

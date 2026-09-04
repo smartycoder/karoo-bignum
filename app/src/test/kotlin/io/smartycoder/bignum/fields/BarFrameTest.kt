@@ -62,29 +62,34 @@ class BarFrameTest {
     private val field = TestField(ZoneKind.POWER)
 
     @Test
-    fun `zero watts still draws a bar, empty rather than absent`() {
+    fun `zero watts still draws a pill, empty rather than absent`() {
         // THE REGRESSION THIS FILE EXISTS FOR. ZoneColors.color returns null for any non-positive
         // value, and the first version keyed the bar's existence on that colour -- so coasting
         // hid the bar, brought both labels back and resized both numbers, several times a minute.
+        //
+        // The pill inherits the decision and sharpens it: power zones start at 0, so a literal
+        // zoneIndex would light Z1 while coasting. The pill is PRESENT with nothing lit.
         val frame = field.barFrame(0.0, profile(), ZoneColorMode.TEXT)
         assertNotNull(frame)
-        assertEquals(0f, frame!!.fraction, 0.0001f)
+        assertEquals(0, frame!!.lit)
+        assertEquals(7, frame.segments)
         assertEquals("0", frame.text)
     }
 
     @Test
-    fun `a value under the first zone's floor draws an empty bar too`() {
+    fun `a value under the first zone's floor draws an empty pill too`() {
         // The heart rate shape of the same bug: a profile whose Z1 starts at 100 has no colour
         // for 85, but 85 bpm is a reading, not missing data.
         val hrField = TestField(ZoneKind.HR)
         val hrZones = listOf(Zone(min = 100, max = 139), Zone(min = 140, max = 200))
         val frame = hrField.barFrame(85.0, profile(hr = hrZones), ZoneColorMode.TEXT)
         assertNotNull(frame)
-        assertEquals(0f, frame!!.fraction, 0.0001f)
+        assertEquals(0, frame!!.lit)
+        assertEquals(2, frame.segments)
     }
 
     @Test
-    fun `no reading means no bar`() {
+    fun `no reading means no pill`() {
         assertNull(field.barFrame(null, profile(), ZoneColorMode.TEXT))
     }
 
@@ -109,11 +114,12 @@ class BarFrameTest {
     }
 
     @Test
-    fun `a live reading fills and colours the bar`() {
+    fun `a live reading lights and colours the pill`() {
         val frame = field.barFrame(263.0, profile(), ZoneColorMode.FILL)
         assertNotNull(frame)
-        // Bottom of zone 5 of 7.
-        assertEquals(4f / 7f, frame!!.fraction, 0.0001f)
+        // Bottom of zone 5 of 7, so five squares lit out of seven.
+        assertEquals(5, frame!!.lit)
+        assertEquals(7, frame.segments)
         assertEquals("263", frame.text)
     }
 }

@@ -5,14 +5,14 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * [ZoneBar.fraction] is the whole bar: everything else about it is drawing. It is also the one
- * place a wrong answer is invisible rather than obviously broken -- a bar that sits at 14% all
- * ride looks like a design choice, not a bug -- so every boundary it has is pinned here.
+ * [ZoneBar.litSegments] is the whole pill: everything else about it is drawing. It is also the
+ * one place a wrong answer is invisible rather than obviously broken -- a pill stuck one zone low
+ * all ride reads as a design choice, not a bug -- so every boundary it has is pinned here.
  */
 class ZoneBarTest {
 
-    // Seven zones, as Karoo builds them for a 250W FTP. Uneven widths on purpose: the point of
-    // giving each zone an equal share of the bar is that the widths do not matter.
+    // Seven zones, as Karoo builds them for a 250W FTP. Uneven widths on purpose: the pill counts
+    // zones, so the widths must not matter.
     private val powerZones = listOf(
         Zone(min = 0, max = 137),
         Zone(min = 138, max = 187),
@@ -23,93 +23,99 @@ class ZoneBarTest {
         Zone(min = 376, max = 500),
     )
 
-    private fun assertFraction(expected: Double, actual: Float) =
-        assertEquals(expected, actual.toDouble(), 0.001)
+    // Five zones whose floor is well above zero, the heart rate shape. A reading below Z1 is a
+    // reading, not a zone.
+    private val hrZones = listOf(
+        Zone(min = 100, max = 129),
+        Zone(min = 130, max = 149),
+        Zone(min = 150, max = 164),
+        Zone(min = 165, max = 177),
+        Zone(min = 178, max = 200),
+    )
 
     @Test
-    fun `no zones leaves the bar empty`() {
-        assertFraction(0.0, ZoneBar.fraction(240.0, emptyList()))
+    fun `no zones lights nothing`() {
+        assertEquals(0, ZoneBar.litSegments(200.0, emptyList()))
     }
 
     @Test
-    fun `a value below the first zone leaves the bar empty`() {
-        assertFraction(0.0, ZoneBar.fraction(-5.0, powerZones))
+    fun `a value in the first zone lights one square`() {
+        assertEquals(1, ZoneBar.litSegments(100.0, powerZones))
     }
 
     @Test
-    fun `the bottom of the first zone is an empty bar`() {
-        assertFraction(0.0, ZoneBar.fraction(0.0, powerZones))
+    fun `a value in the last zone lights every square`() {
+        assertEquals(7, ZoneBar.litSegments(400.0, powerZones))
     }
 
     @Test
-    fun `the top of the last zone is a full bar`() {
-        assertFraction(1.0, ZoneBar.fraction(500.0, powerZones))
+    fun `each zone lights its own index plus one`() {
+        assertEquals(2, ZoneBar.litSegments(150.0, powerZones))
+        assertEquals(3, ZoneBar.litSegments(200.0, powerZones))
+        assertEquals(4, ZoneBar.litSegments(240.0, powerZones))
+        assertEquals(5, ZoneBar.litSegments(280.0, powerZones))
+        assertEquals(6, ZoneBar.litSegments(350.0, powerZones))
     }
 
     @Test
-    fun `past the top of the last zone stays full rather than overflowing`() {
-        assertFraction(1.0, ZoneBar.fraction(900.0, powerZones))
+    fun `a zone boundary belongs to the zone it opens`() {
+        // The lookup is `value >= min`, so 138 is the first watt of Z2 rather than the last of Z1.
+        assertEquals(1, ZoneBar.litSegments(137.0, powerZones))
+        assertEquals(2, ZoneBar.litSegments(138.0, powerZones))
     }
 
     @Test
-    fun `each zone gets an equal share whatever its width`() {
-        // Bottom of zone 4 (index 3) is exactly three sevenths along, even though zones 1-3 are
-        // far wider than zones 4-5. That equal share is the reason this does not need the
-        // scale's top value to be trustworthy.
-        assertFraction(3.0 / 7.0, ZoneBar.fraction(226.0, powerZones))
-        assertFraction(4.0 / 7.0, ZoneBar.fraction(263.0, powerZones))
+    fun `a gap between two zones falls to the lower one`() {
+        // Nothing promises the maxes and mins meet. A reading in the crack belongs to the zone it
+        // has already passed the floor of, not to the one it has not reached.
+        val gapped = listOf(Zone(min = 0, max = 100), Zone(min = 120, max = 200))
+        assertEquals(1, ZoneBar.litSegments(110.0, gapped))
     }
 
     @Test
-    fun `inside a zone the bar moves proportionally through that zone's share`() {
-        // Zone 3 runs 188..225; 206.5 is its midpoint, so the bar is half way through the third
-        // seventh of its width.
-        assertFraction((2.0 + 0.5) / 7.0, ZoneBar.fraction(206.5, powerZones))
+    fun `above the last zone stays at the last zone`() {
+        // Nothing here promises the top zone's max is a real number, so a value past it must
+        // clamp rather than run off the end of the squares.
+        assertEquals(7, ZoneBar.litSegments(9999.0, powerZones))
     }
 
     @Test
-    fun `a gap between zones counts as the top of the lower one`() {
-        // Karoo's zones are contiguous by construction, but nothing here guarantees it: 262 is
-        // zone 4's max and 263 is zone 5's min, so a hypothetical 262.5 falls in neither. It
-        // must clamp to the top of the zone it is past, not run over into the next one's share.
-        assertFraction(4.0 / 7.0, ZoneBar.fraction(262.5, powerZones))
+    fun `below the first zone's floor lights nothing`() {
+        // 85 bpm on a profile whose Z1 starts at 100. zoneIndex returns -1 and the pill is empty,
+        // which is the honest answer: it is a reading, not a zone.
+        assertEquals(0, ZoneBar.litSegments(85.0, hrZones))
     }
 
     @Test
-    fun `a zero-width first zone fills only its own share, not the whole bar`() {
-        // The guard returns within = 1.0 for a degenerate zone, which is right for the LAST one
-        // and must not be mistaken for a full bar when it is the first: the value is at the top
-        // of zone 1 of 2, so half.
-        val zones = listOf(Zone(min = 100, max = 100), Zone(min = 101, max = 180))
-        assertFraction(0.5, ZoneBar.fraction(100.0, zones))
+    fun `zero lights nothing even where a zone would claim it`() {
+        // THE CASE THAT CHANGED WITH THE PILL. Power zones start at 0, so zoneIndex(0) is 0 and a
+        // literal reading of it would light Z1 for the whole of every coast and every descent.
+        // The bar this replaces drew that case empty, and it stays empty.
+        assertEquals(0, ZoneBar.litSegments(0.0, powerZones))
+        assertEquals(0, ZoneBar.litSegments(-5.0, powerZones))
     }
 
     @Test
-    fun `a zone with no width at all is treated as full rather than dividing by zero`() {
-        // The shape a sentinel or an unset top zone can arrive in. Without the guard this is
-        // (v - min) / 0 -- Infinity or NaN -- and NaN would survive every coerce below it.
-        val zones = listOf(Zone(min = 0, max = 100), Zone(min = 101, max = 101))
-        assertFraction(1.0, ZoneBar.fraction(101.0, zones))
+    fun `NaN lights nothing`() {
+        // Every comparison against NaN is false, so it fails the `value <= 0` guard and then
+        // finds no zone. Pinned because a NaN that survived would be drawn as a square count.
+        assertEquals(0, ZoneBar.litSegments(Double.NaN, powerZones))
     }
 
     @Test
-    fun `a nonsense value leaves the bar empty instead of drawing a NaN width`() {
-        assertFraction(0.0, ZoneBar.fraction(Double.NaN, powerZones))
-        assertFraction(0.0, ZoneBar.fraction(Double.NEGATIVE_INFINITY, powerZones))
-        assertFraction(1.0, ZoneBar.fraction(Double.POSITIVE_INFINITY, powerZones))
+    fun `infinities land at the ends`() {
+        assertEquals(0, ZoneBar.litSegments(Double.NEGATIVE_INFINITY, powerZones))
+        assertEquals(7, ZoneBar.litSegments(Double.POSITIVE_INFINITY, powerZones))
     }
 
     @Test
-    fun `five zones divide the bar in fifths, not sevenths`() {
-        // The HR scale. Nothing in fraction() may assume the seven-zone power scale.
-        val hrZones = listOf(
-            Zone(min = 100, max = 119),
-            Zone(min = 120, max = 139),
-            Zone(min = 140, max = 159),
-            Zone(min = 160, max = 179),
-            Zone(min = 180, max = 200),
-        )
-        assertFraction(2.0 / 5.0, ZoneBar.fraction(140.0, hrZones))
-        assertFraction(1.0, ZoneBar.fraction(200.0, hrZones))
+    fun `the count never exceeds the zones on offer`() {
+        // The pill draws exactly `segments` squares and lights `lit` of them; a lit past the end
+        // would be a silent no-op today and an array walk off the end after any refactor.
+        for (zones in listOf(powerZones, hrZones)) {
+            for (v in listOf(0.0, 1.0, 137.0, 250.0, 9999.0)) {
+                assert(ZoneBar.litSegments(v, zones) in 0..zones.size)
+            }
+        }
     }
 }

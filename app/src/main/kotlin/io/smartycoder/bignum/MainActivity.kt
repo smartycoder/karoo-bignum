@@ -296,6 +296,36 @@ class MainActivity : Activity() {
             setPadding(0, dp(7), 0, 0)
         }
 
+        // Directly under the bar source, because it only ever describes the thing that spinner
+        // switches on. Not hidden when no source is chosen: no other setting on this screen gates
+        // itself on another, and a control that comes and goes is harder to find again than one
+        // that is simply inert.
+        val pillStyleLabel = TextView(this).apply {
+            text = getString(R.string.setting_zone_pill_style)
+            textSize = 18f
+            setPadding(0, dp(20), 0, 0)
+        }
+
+        // Order matches ZonePillStyle so the spinner position is the ordinal.
+        val pillStyles = ZonePillStyle.entries
+        val pillStyleLabels = pillStyles.map {
+            getString(
+                when (it) {
+                    ZonePillStyle.SEGMENTS -> R.string.setting_zone_pill_segments
+                    ZonePillStyle.SOLID -> R.string.setting_zone_pill_solid
+                },
+            )
+        }
+        val pillStyle = spinner(pillStyleLabels, pillStyles.indexOf(Settings.zonePillStyle(this))) {
+            Settings.setZonePillStyle(this, pillStyles[it])
+        }
+
+        val pillStyleNote = TextView(this).apply {
+            text = getString(R.string.setting_zone_pill_style_desc)
+            textSize = 13f
+            setPadding(0, dp(7), 0, 0)
+        }
+
         val hudNote = TextView(this).apply {
             text = getString(R.string.hud_desc)
             textSize = 13f
@@ -449,7 +479,8 @@ class MainActivity : Activity() {
             getString(R.string.section_hud_desc),
             R.drawable.ic_bignum,
             false,
-            hudLeftLabel, hudLeft, hudRightLabel, hudRight, hudBarLabel, hudBar, hudBarNote, hudNote,
+            hudLeftLabel, hudLeft, hudRightLabel, hudRight, hudBarLabel, hudBar, hudBarNote,
+            pillStyleLabel, pillStyle, pillStyleNote, hudNote,
         )
         val appearanceSection = section(
             getString(R.string.section_appearance),
