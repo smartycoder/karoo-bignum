@@ -1,7 +1,7 @@
 # karoo-bignum
 
 Large, bold numeric data fields for the Hammerhead Karoo, drawn so the number fills the field
-instead of floating in the middle of it. 58 fields covering speed, heart rate, power, cadence,
+instead of floating in the middle of it. 60 fields covering speed, heart rate, power, cadence,
 climbing, laps, navigation and time, with optional heart-rate and power zone coloring driven by
 your Karoo `UserProfile`.
 
@@ -53,12 +53,14 @@ Lap - Max Power · Lap - W/kg · Lap - VAM · Lap - Ascent · Lap - Descent
 
 **Navigation** — Nav - To Destination · Nav - To Next Turn · Nav - ETA
 
-**Time & environment** — Time - Elapsed · Temperature
+**Time & environment** — Time - Elapsed · Sunrise · Sunset · Temperature
 
 **Composite** — HUD - Two Fields
 
 The navigation fields need a route loaded; without one they sit at `--`. **Nav - ETA** is a wall
-clock in 24-hour form, drawn whole rather than with raised minutes.
+clock in 24-hour form, drawn whole rather than with raised minutes. **Sunrise** and **Sunset**
+are drawn the same way; the Karoo works them out from where you are, so they need a position
+fix before they read anything.
 
 Speed, distance, elevation and temperature follow the metric/imperial preference from your Karoo
 profile. Power-to-weight and TSS use the rider weight and FTP from the same profile.
@@ -111,7 +113,7 @@ says something about data it does not have.
 
 **HUD - Two Fields** is one tile showing two other fields side by side, each drawn as a whole
 BigNum field — its own header, zone color, grade wedge and typeface — with a hairline between
-them. Pick what each half shows in the BigNum app; any of the other 58 fields will do, the same
+them. Pick what each half shows in the BigNum app; any of the other 60 fields will do, the same
 one twice included. A half whose sensor drops out recovers on its own without taking the other
 half down with it.
 

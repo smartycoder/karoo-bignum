@@ -14,6 +14,17 @@ import io.hammerhead.karooext.models.DataType
  */
 object FieldCatalog {
 
+    /**
+     * The sunrise and sunset previews, as seconds into the day -- 6:42 and 20:18.
+     *
+     * [Formatters.clock] takes a value this small for seconds into the day rather than an
+     * instant, so the demo reads the same wherever the Karoo is; a fixed epoch would drift a
+     * screenshot by the rider's offset. Named so the test that pins them to those two times
+     * reads the same numbers the fields do.
+     */
+    internal const val SUNRISE_PREVIEW = 24_120.0
+    internal const val SUNSET_PREVIEW = 73_080.0
+
     fun build(extension: String, karoo: KarooSystemService): List<BaseNumericField> {
         return listOf(
             // Speed
@@ -95,6 +106,9 @@ object FieldCatalog {
 
             // Time and environment
             TimeField(extension, "elapsed", karoo, DataType.Type.ELAPSED_TIME, "TIME", previewValue = 5_073_000.0, demoInTestMode = false),
+            // Both keep the ETA's treatment -- a 24-hour wall clock drawn whole, no raised tail.
+            SimpleField(extension, "sunrise", karoo, DataType.Type.SUNRISE, "SUNRISE", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", raisedTailAllowed = false, previewValue = SUNRISE_PREVIEW),
+            SimpleField(extension, "sunset", karoo, DataType.Type.SUNSET, "SUNSET", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", raisedTailAllowed = false, previewValue = SUNSET_PREVIEW),
             TemperatureField(extension, karoo),
         )
     }

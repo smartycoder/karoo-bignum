@@ -6,6 +6,14 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Each entry here should match the `releaseNotes` field in `app/manifest.json`, which is what the
 Karoo shows in its own update flow.
 
+## [Unreleased]
+
+### Added
+
+- **Sunrise** and **Sunset**, under Time & environment. Both read a wall clock in 24-hour form,
+  drawn whole rather than with raised minutes, the way Nav - ETA already is. The Karoo works
+  the two times out from where you are, so they stay at `--` until it has a position fix.
+
 ## [1.3.1] - 2026-09-02
 
 ### Fixed
