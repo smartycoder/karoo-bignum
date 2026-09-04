@@ -83,8 +83,14 @@ class HeaderLabelTest {
      */
     @Test
     fun theLabelIsLiftedTowardsTheTopEdgeAndTheNumberGetsWhatItGaveUp() {
-        val expectedLift = FieldRenderer.edgePadding(context) - FieldRenderer.headerTopInset(context)
-        assertEquals("the lift the renderer thinks it applies", 2, expectedLift)
+        assertEquals(
+            "the lift the renderer thinks it applies",
+            2,
+            FieldRenderer.edgePadding(context) - FieldRenderer.headerTopInset(context),
+        )
+        // Both insets, since neither is the edge padding any more: the top gave 2px to lift the
+        // label and the bottom gave 5px to the number under it.
+        val expectedLift = FieldRenderer.headerBottomInset(context) - FieldRenderer.headerTopInset(context)
         val bitmap = header("HR")
         val ink = ink("HR")
         val above = ink.top

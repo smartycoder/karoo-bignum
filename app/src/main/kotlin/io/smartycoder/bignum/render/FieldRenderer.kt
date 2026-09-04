@@ -89,6 +89,21 @@ object FieldRenderer {
      */
     private const val LABEL_LIFT_PX = 2
 
+    /**
+     * Pixels taken off the clearance BELOW the label and BELOW the number, and handed to the
+     * number's box.
+     *
+     * Measured on a Karoo 3 before this existed: a 124px tile spent 44px on the label row and
+     * 8px on the bottom edge, leaving 72 for the digits. The number was not floating in that
+     * box -- the diagnostic showed ink exactly equal to fullBox, so it already filled every
+     * pixel it was given. The only way to draw it taller is to give it more, which means taking
+     * it from the two gaps around it.
+     *
+     * Both are cut by the same amount so the number stays visually centred between the label
+     * and the tile edge; cutting only one would slide it towards that side.
+     */
+    private const val VALUE_GAIN_PX = 5
+
     private const val ICON_SCALE = 1.4f
     private const val ICON_GAP_DP = 3f
 
@@ -371,7 +386,7 @@ object FieldRenderer {
         // The header always takes its own height off the top, and the number always gets that
         // back as VIEW padding below. That pairing is what makes the clearance survive a
         // [ViewConfig.viewSize] that does not match the view -- see [render]'s note on it.
-        val fullBox = viewHeight - pad - header.height
+        val fullBox = viewHeight - valueBottomPad(context) - header.height
 
         val numberPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             applyFont(context, font)
@@ -515,8 +530,12 @@ object FieldRenderer {
         // and there the outline goes back to clipping rather than the number leaving the tile.
         val sidePad = (pad - margin).coerceAtLeast(0)
         val topPad = (headerPad - margin).coerceAtLeast(0)
+        // The bottom is its own number, not sidePad reused: it is the gap fullBox was computed
+        // against, and the two have to be the same or the raster is measured for one box and
+        // fitted into another.
+        val bottomPad = (valueBottomPad(context) - margin).coerceAtLeast(0)
         for (id in BITMAP_IDS) {
-            views.setViewPadding(id, sidePad, topPad, sidePad, sidePad)
+            views.setViewPadding(id, sidePad, topPad, sidePad, bottomPad)
         }
 
         val target = when (config.alignment) {
@@ -687,7 +706,23 @@ object FieldRenderer {
      * on precisely the short tile the redesign exists to fix.
      */
     internal fun headerHeight(context: Context): Int =
-        (labelBand(context) + headerTopInset(context) + edgePadding(context)).toInt()
+        (labelBand(context) + headerTopInset(context) + headerBottomInset(context)).toInt()
+
+    /**
+     * Clearance between the label and the number below it. Less than the edge padding by
+     * [VALUE_GAIN_PX]: the label's own band already separates the two, and the full padding on
+     * top of it was a gap wider than the label's capitals are tall.
+     */
+    internal fun headerBottomInset(context: Context): Int =
+        (edgePadding(context) - VALUE_GAIN_PX).coerceAtLeast(0)
+
+    /**
+     * Clearance under the number, against [edgePadding] at its sides. Vertical room is what the
+     * number is short of -- horizontally it has the width template's slack -- so the bottom is
+     * the one edge where the padding is worth spending on the digits instead.
+     */
+    internal fun valueBottomPad(context: Context): Int =
+        (edgePadding(context) - VALUE_GAIN_PX).coerceAtLeast(0)
 
     /**
      * The band the icon and the label are centred in, before the insets above and below it.
