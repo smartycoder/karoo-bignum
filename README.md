@@ -76,18 +76,23 @@ Without a weight to divide by they show `--` rather than a number that would rea
 
 ### Durations
 
-Ride time and lap time read `h:mm:ss` from one hour and `m:ss` below it — `4:59`, not `0:04:59`.
-The width budget follows the shape of the value, so on the fields where width is the binding
-constraint the shorter form is drawn appreciably taller. The clock steps down a size as it
-passes the hour; two glyphs of height for the first hour of every ride is the trade.
+The durations — riding and total time, a lap, time to destination — read `h:mm:ss` from one
+hour and `m:ss` below it: `4:59`, not `0:04:59`. The width budget follows the shape of the
+value, so on the fields where width is the binding constraint the shorter form is drawn
+appreciably taller. A running duration steps down a size as it passes the hour; two glyphs of
+height for the first hour of every ride is the trade.
+
+The wall clocks — Clock, Sunrise, Sunset and Nav - ETA — are not durations and do none of this.
+They hold one width at `h:mm` and are drawn whole.
 
 With **Raised decimals** on, the seconds come out about half size and raised: `1:34:17` reads as
 a large **1:34** with a small `17` after it. Hours and minutes are what you read at a glance; the
-seconds only need to be present.
+seconds only need to be present. The wall clocks opt out — there is no tail on `15:14` worth
+shrinking.
 
 ### Raised decimals
 
-A setting, on by default, that draws the small end of a value small: a decimal, or a ride time's
+A setting, on by default, that draws the small end of a value small: a decimal, or a duration's
 seconds. `34.9` becomes 34⁹, `1:34:17` becomes 1:34¹⁷. The point or colon is dropped, because
 raised digits already say what they are and the separator's width is width the number can have
 instead.
