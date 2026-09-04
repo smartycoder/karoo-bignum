@@ -6,6 +6,46 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Each entry here should match the `releaseNotes` field in `app/manifest.json`, which is what the
 Karoo shows in its own update flow.
 
+## [Unreleased]
+
+### Added
+
+- **Sunrise** and **Sunset**, under Time & environment. Both read a wall clock in 24-hour form,
+  drawn whole rather than with raised minutes, the way Nav - ETA already is. The Karoo works
+  the two times out from where you are, so they stay at `--` until it has a position fix.
+
+- Twelve more fields, each filling a gap rather than adding a variant for its own sake:
+  **Clock** (the plain time of day, which the ETA and the two sun times had left oddly missing),
+  **Time - Total** (the whole ride including its stops, against the Time - Riding beside it that
+  counts only what was recorded -- the SDK names those two streams the other way round from
+  their meanings, so the labels here follow the documentation rather than the constant),
+  **Nav - Time to Destination** (how long is left, beside the distance and the arrival clock
+  that were already there), **Power - % of FTP** (what HR - % of Max is to heart rate),
+  **Lap - Max HR** (the lap group had a maximum for speed, cadence and power but not heart
+  rate), **Battery**, and smoothed **Speed** and **Cadence** at 3s, 5s and 10s -- power has
+  carried six smoothed variants all along and neither of these had one.
+
+- Each field now also carries a test that it is declared in `extension_info.xml`, which is the
+  list the Karoo actually builds its picker from. A field missing there compiles and streams
+  and simply never shows up, so the two hand-kept lists had nothing holding them together.
+
+### Changed
+
+- The four wall clocks now preview one moment rather than four unrelated ones: 14:35 on the
+  clock, 39 minutes left to run, arriving at 15:14. Nav - ETA's preview was a fixed epoch, so
+  it rendered in the device's own zone and read as intended only in UTC.
+
+- The wall clocks raise their minutes, the way a duration raises its seconds: `15:14` draws as
+  a large **15** with a small `14`. **Nav - ETA** was drawn whole and the three clocks added
+  here followed it, which left every clock-shaped field on a page shrinking its tail except
+  those four.
+
+- **Time - Elapsed** is now **Time - Riding**, labelled `RIDE TIME` on the tile instead of
+  `TIME`. It is unchanged in what it counts -- time spent recording, stops excluded, which is
+  what karoo-ext documents that stream as. Against the Time - Total added beside it, `TIME`
+  said nothing about which of the pair dropped the stops. Existing pages keep the field: it is
+  stored by id, and the id has not changed.
+
 ## [1.3.1] - 2026-09-02
 
 ### Fixed

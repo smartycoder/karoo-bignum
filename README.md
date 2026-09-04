@@ -1,7 +1,7 @@
 # karoo-bignum
 
 Large, bold numeric data fields for the Hammerhead Karoo, drawn so the number fills the field
-instead of floating in the middle of it. 58 fields covering speed, heart rate, power, cadence,
+instead of floating in the middle of it. 72 fields covering speed, heart rate, power, cadence,
 climbing, laps, navigation and time, with optional heart-rate and power zone coloring driven by
 your Karoo `UserProfile`.
 
@@ -32,33 +32,40 @@ The same page in each of the three zone coloring modes.
 
 All fields appear in the field picker under **BigNum**.
 
-**Speed** — Speed · Speed - Avg · Speed - Max
+**Speed** — Speed · Speed - 3s · Speed - 5s · Speed - 10s · Speed - Avg · Speed - Max
 
 **Distance** — Distance
 
 **Heart rate** — HR · HR - Zone · HR - Avg · HR - Max · HR - % of Max · HR - % of HRR · HR - Avg % of HRR
 
-**Cadence** — Cadence · Cadence - Avg · Cadence - Max
+**Cadence** — Cadence · Cadence - 3s · Cadence - 5s · Cadence - 10s · Cadence - Avg · Cadence - Max
 
 **Power** — Power · Power - Zone · Power - 3s · Power - 5s · Power - 10s · Power - 30s ·
-Power - 20m · Power - 1hr · Power - Avg · Power - Max · Power - Normalized ·
+Power - 20m · Power - 1hr · Power - Avg · Power - Max · Power - % of FTP · Power - Normalized ·
 Power - W/kg · Power - W/kg 3s · Power - W/kg 5s · Power - TSS · Power - Calories
 
 **Climbing** — Climb - Elevation · Climb - Ascent · Climb - Descent · Climb - Grade ·
 Climb - VAM · Climb - VAM Avg · Climb - Dist to Top · Climb - Elev to Top
 
 **Lap** — Lap - Number · Lap - Time · Lap - Distance · Lap - Speed · Lap - Max Speed ·
-Lap - HR · Lap - Cadence · Lap - Max Cadence · Lap - Avg Power · Lap - Normalized Power ·
+Lap - HR · Lap - Max HR · Lap - Cadence · Lap - Max Cadence · Lap - Avg Power · Lap - Normalized Power ·
 Lap - Max Power · Lap - W/kg · Lap - VAM · Lap - Ascent · Lap - Descent
 
-**Navigation** — Nav - To Destination · Nav - To Next Turn · Nav - ETA
+**Navigation** — Nav - To Destination · Nav - To Next Turn · Nav - Time to Destination · Nav - ETA
 
-**Time & environment** — Time - Elapsed · Temperature
+**Time & environment** — Time - Riding · Time - Total · Clock · Sunrise · Sunset ·
+Temperature · Battery
 
 **Composite** — HUD - Two Fields
 
 The navigation fields need a route loaded; without one they sit at `--`. **Nav - ETA** is a wall
-clock in 24-hour form, drawn whole rather than with raised minutes.
+clock in 24-hour form. **Clock**, **Sunrise** and **Sunset** are drawn the same way; the Karoo
+works the two sun times out from where you are, so they need a position fix before they read
+anything.
+
+**Time - Riding** is the recording clock and stops when the ride does; **Time - Total** runs
+from the start of the ride and keeps counting through the stops, so it is the longer of the two
+on any ride with a coffee in it.
 
 Speed, distance, elevation and temperature follow the metric/imperial preference from your Karoo
 profile. Power-to-weight and TSS use the rider weight and FTP from the same profile.
@@ -69,18 +76,24 @@ Without a weight to divide by they show `--` rather than a number that would rea
 
 ### Durations
 
-Ride time and lap time read `h:mm:ss` from one hour and `m:ss` below it — `4:59`, not `0:04:59`.
-The width budget follows the shape of the value, so on the fields where width is the binding
-constraint the shorter form is drawn appreciably taller. The clock steps down a size as it
-passes the hour; two glyphs of height for the first hour of every ride is the trade.
+The durations — riding and total time, a lap, time to destination — read `h:mm:ss` from one
+hour and `m:ss` below it: `4:59`, not `0:04:59`. The width budget follows the shape of the
+value, so on the fields where width is the binding constraint the shorter form is drawn
+appreciably taller. A running duration steps down a size as it passes the hour; two glyphs of
+height for the first hour of every ride is the trade.
+
+The wall clocks — Clock, Sunrise, Sunset and Nav - ETA — hold one width at `h:mm` instead, since
+their value cannot outgrow it. They still raise their minutes, so everything shaped like a clock
+shrinks its least significant unit and nothing on a page reads as the odd one out.
 
 With **Raised decimals** on, the seconds come out about half size and raised: `1:34:17` reads as
 a large **1:34** with a small `17` after it. Hours and minutes are what you read at a glance; the
-seconds only need to be present.
+seconds only need to be present. On a wall clock the same rule takes the minutes: `15:14` reads
+as a large **15** with a small `14`.
 
 ### Raised decimals
 
-A setting, on by default, that draws the small end of a value small: a decimal, or a ride time's
+A setting, on by default, that draws the small end of a value small: a decimal, or a duration's
 seconds. `34.9` becomes 34⁹, `1:34:17` becomes 1:34¹⁷. The point or colon is dropped, because
 raised digits already say what they are and the separator's width is width the number can have
 instead.
@@ -111,7 +124,7 @@ says something about data it does not have.
 
 **HUD - Two Fields** is one tile showing two other fields side by side, each drawn as a whole
 BigNum field — its own header, zone color, grade wedge and typeface — with a hairline between
-them. Pick what each half shows in the BigNum app; any of the other 58 fields will do, the same
+them. Pick what each half shows in the BigNum app; any of the other 72 fields will do, the same
 one twice included. A half whose sensor drops out recovers on its own without taking the other
 half down with it.
 

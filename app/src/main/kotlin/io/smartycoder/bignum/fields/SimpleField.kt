@@ -22,6 +22,9 @@ class SimpleField(
     override val widthTemplate: String = FieldRenderer.DEFAULT_WIDTH_TEMPLATE,
     override val valueField: String? = null,
     override val raisedTailAllowed: Boolean = true,
+    // True shows previewValue in test mode. The clocks pass false, so that a screenshot of a
+    // value which moves on its own shows it moving; see TimeField.
+    override val demoInTestMode: Boolean = true,
     private val needsProfile: Boolean = false,
 ) : BaseNumericField(extension, typeId, karoo) {
     override fun formatNeedsProfile() = needsProfile

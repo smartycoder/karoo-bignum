@@ -6,6 +6,9 @@
     scansDevices="false">
     <!-- Speed -->
     <DataType displayName="@string/df_speed"     graphical="true" icon="@drawable/ic_speed" typeId="speed"       description="@string/df_speed_desc"/>
+    <DataType displayName="@string/df_speed_3s" graphical="true" icon="@drawable/ic_speed" typeId="speed3s" description="@string/df_speed_3s_desc"/>
+    <DataType displayName="@string/df_speed_5s" graphical="true" icon="@drawable/ic_speed" typeId="speed5s" description="@string/df_speed_5s_desc"/>
+    <DataType displayName="@string/df_speed_10s" graphical="true" icon="@drawable/ic_speed" typeId="speed10s" description="@string/df_speed_10s_desc"/>
     <DataType displayName="@string/df_avg_speed" graphical="true" icon="@drawable/ic_speed" typeId="avgSpeed" description="@string/df_avg_speed_desc"/>
     <DataType displayName="@string/df_max_speed" graphical="true" icon="@drawable/ic_speed" typeId="maxSpeed" description="@string/df_max_speed_desc"/>
 
@@ -23,6 +26,9 @@
 
     <!-- Cadence -->
     <DataType displayName="@string/df_cadence"   graphical="true" icon="@drawable/ic_cadence" typeId="cadence"     description="@string/df_cadence_desc"/>
+    <DataType displayName="@string/df_cadence_3s" graphical="true" icon="@drawable/ic_cadence" typeId="cadence3s" description="@string/df_cadence_3s_desc"/>
+    <DataType displayName="@string/df_cadence_5s" graphical="true" icon="@drawable/ic_cadence" typeId="cadence5s" description="@string/df_cadence_5s_desc"/>
+    <DataType displayName="@string/df_cadence_10s" graphical="true" icon="@drawable/ic_cadence" typeId="cadence10s" description="@string/df_cadence_10s_desc"/>
     <DataType displayName="@string/df_avg_cadence" graphical="true" icon="@drawable/ic_cadence" typeId="avgCadence" description="@string/df_avg_cadence_desc"/>
     <DataType displayName="@string/df_max_cadence" graphical="true" icon="@drawable/ic_cadence" typeId="maxCadence" description="@string/df_max_cadence_desc"/>
 
@@ -37,6 +43,7 @@
     <DataType displayName="@string/df_power_1hr" graphical="true" icon="@drawable/ic_bolt" typeId="power1hr" description="@string/df_power_1hr_desc"/>
     <DataType displayName="@string/df_avg_power" graphical="true" icon="@drawable/ic_bolt" typeId="avgPower" description="@string/df_avg_power_desc"/>
     <DataType displayName="@string/df_max_power" graphical="true" icon="@drawable/ic_bolt" typeId="maxPower" description="@string/df_max_power_desc"/>
+    <DataType displayName="@string/df_pct_ftp" graphical="true" icon="@drawable/ic_bolt" typeId="percentMaxFtp" description="@string/df_pct_ftp_desc"/>
     <DataType displayName="@string/df_np" graphical="true" icon="@drawable/ic_bolt" typeId="np" description="@string/df_np_desc"/>
     <DataType displayName="@string/df_w_kg"      graphical="true" icon="@drawable/ic_bolt" typeId="powerToWeight" description="@string/df_w_kg_desc"/>
     <DataType displayName="@string/df_w_kg_3s" graphical="true" icon="@drawable/ic_bolt" typeId="powerToWeight3s" description="@string/df_w_kg_3s_desc"/>
@@ -61,6 +68,7 @@
     <DataType displayName="@string/df_lap_speed" graphical="true" icon="@drawable/ic_speed" typeId="lapSpeed" description="@string/df_lap_speed_desc"/>
     <DataType displayName="@string/df_lap_max_speed" graphical="true" icon="@drawable/ic_speed" typeId="lapMaxSpeed" description="@string/df_lap_max_speed_desc"/>
     <DataType displayName="@string/df_lap_hr" graphical="true" icon="@drawable/ic_heart" typeId="lapHr" description="@string/df_lap_hr_desc"/>
+    <DataType displayName="@string/df_lap_max_hr" graphical="true" icon="@drawable/ic_heart" typeId="lapMaxHr" description="@string/df_lap_max_hr_desc"/>
     <DataType displayName="@string/df_lap_cadence" graphical="true" icon="@drawable/ic_cadence" typeId="lapCadence" description="@string/df_lap_cadence_desc"/>
     <DataType displayName="@string/df_lap_max_cadence" graphical="true" icon="@drawable/ic_cadence" typeId="lapMaxCadence" description="@string/df_lap_max_cadence_desc"/>
     <DataType displayName="@string/df_lap_power" graphical="true" icon="@drawable/ic_bolt" typeId="lapPower" description="@string/df_lap_power_desc"/>
@@ -74,11 +82,17 @@
     <!-- Navigation -->
     <DataType displayName="@string/df_dist_to_dest" graphical="true" icon="@drawable/ic_distance" typeId="distanceToDestination" description="@string/df_dist_to_dest_desc"/>
     <DataType displayName="@string/df_dist_to_turn" graphical="true" icon="@drawable/ic_distance" typeId="distanceToNextTurn" description="@string/df_dist_to_turn_desc"/>
+    <DataType displayName="@string/df_time_to_dest" graphical="true" icon="@drawable/ic_clock" typeId="timeToDestination" description="@string/df_time_to_dest_desc"/>
     <DataType displayName="@string/df_eta" graphical="true" icon="@drawable/ic_clock" typeId="timeOfArrival" description="@string/df_eta_desc"/>
 
     <!-- Time and environment -->
     <DataType displayName="@string/df_elapsed"   graphical="true" icon="@drawable/ic_clock" typeId="elapsed"     description="@string/df_elapsed_desc"/>
+    <DataType displayName="@string/df_total_time" graphical="true" icon="@drawable/ic_clock" typeId="totalTime" description="@string/df_total_time_desc"/>
+    <DataType displayName="@string/df_clock" graphical="true" icon="@drawable/ic_clock" typeId="clockTime" description="@string/df_clock_desc"/>
+    <DataType displayName="@string/df_sunrise" graphical="true" icon="@drawable/ic_clock" typeId="sunrise" description="@string/df_sunrise_desc"/>
+    <DataType displayName="@string/df_sunset" graphical="true" icon="@drawable/ic_clock" typeId="sunset" description="@string/df_sunset_desc"/>
     <DataType displayName="@string/df_temp"      graphical="true" icon="@drawable/ic_temp" typeId="temp"        description="@string/df_temp_desc"/>
+    <DataType displayName="@string/df_battery" graphical="true" icon="@drawable/ic_battery" typeId="battery" description="@string/df_battery_desc"/>
 
     <!-- Composite -->
     <DataType displayName="@string/df_hud" graphical="true" icon="@drawable/ic_bignum" typeId="hud" description="@string/df_hud_desc"/>

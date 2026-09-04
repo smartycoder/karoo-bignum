@@ -17,9 +17,17 @@ class TimeField(
     override val upstreamTypeId: String,
     override val label: String,
     override val previewValue: Double,
-    // The ride clock opts out: it is the one value that is real and moving with no sensor
-    // paired, and watching it run is how you tell a live field from a frozen one, so a frozen
-    // demo time there makes a screenshot look broken rather than staged.
+    // Null reads the stream's singleValue. A duration that ships alongside other fields --
+    // time to destination, riding with the route flags -- names the one it wants instead.
+    override val valueField: String? = null,
+    // A ride clock before the ride starts is a stopped clock, and "--" says nothing 0:00 does
+    // not say better. A duration waiting on a route has no such reading: it passes null and
+    // sits at "--" beside the nav distances, which do the same.
+    override val missingValue: Double? = 0.0,
+    // True shows previewValue in test mode. The ride clocks pass false: they are the values
+    // that are real and moving with no sensor paired, and watching one run is how you tell a
+    // live field from a frozen one, so a frozen demo time makes a screenshot look broken
+    // rather than staged.
     override val demoInTestMode: Boolean = true,
 ) : BaseNumericField(extension, typeId, karoo) {
     override val iconRes = R.drawable.ic_clock
@@ -27,8 +35,4 @@ class TimeField(
     override val format = Formatters.time
 
     override fun widthBudget(text: String) = Formatters.timeTemplate(text)
-
-    // Before the ride starts there is no stream, and "--" says nothing a stopped clock does not
-    // say better.
-    override val missingValue = 0.0
 }

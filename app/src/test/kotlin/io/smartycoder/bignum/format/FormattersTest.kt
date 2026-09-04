@@ -1,5 +1,6 @@
 package io.smartycoder.bignum.format
 
+import io.smartycoder.bignum.fields.FieldCatalog
 import io.hammerhead.karooext.models.UserProfile
 import io.hammerhead.karooext.models.UserProfile.PreferredUnit
 import io.hammerhead.karooext.models.UserProfile.PreferredUnit.UnitType
@@ -218,6 +219,27 @@ class FormattersTest {
 
     @Test fun `clock at midnight`() {
         assertEquals("0:00" to "", Formatters.clock(0.0, null))
+    }
+
+    // The sunrise and sunset fields carry their preview as seconds into the day so the demo
+    // reads the same in every time zone. Two zones on opposite sides of UTC are what make that
+    // claim, rather than one that could pass on a coincidence, and the values come from the
+    // catalog itself so a changed constant fails here instead of drifting silently.
+    @Test fun `the clock previews read as the times the catalog names`() {
+        for (zone in listOf("UTC", "Pacific/Auckland", "America/Los_Angeles")) {
+            withZone(zone) {
+                assertEquals("6:42" to "", Formatters.clock(FieldCatalog.SUNRISE_PREVIEW, null))
+                assertEquals("20:18" to "", Formatters.clock(FieldCatalog.SUNSET_PREVIEW, null))
+                assertEquals("14:35" to "", Formatters.clock(FieldCatalog.CLOCK_PREVIEW, null))
+                assertEquals("15:14" to "", Formatters.clock(FieldCatalog.ETA_PREVIEW, null))
+            }
+        }
+    }
+
+    // The four clocks are previewed as one moment, so a screenshot of a page carrying several
+    // of them is not four unrelated times: 14:35 now, 39 minutes to run, arriving 15:14.
+    @Test fun `the arrival preview is the clock preview plus the time to destination preview`() {
+        assertEquals(FieldCatalog.ETA_PREVIEW - FieldCatalog.CLOCK_PREVIEW, 39 * 60.0, 0.0)
     }
 
     @Test fun `clock follows the device time zone`() {

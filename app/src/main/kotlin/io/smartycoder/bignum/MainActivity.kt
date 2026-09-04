@@ -25,7 +25,7 @@ class MainActivity : Activity() {
 
     // Labels only, and applicationContext to match BigNumExtension.onCreate: nothing here
     // connects -- KarooSystemService's constructor only allocates, it binds nothing until
-    // connect() -- but an Activity handed to 58 long-lived field objects is a leak waiting
+    // connect() -- but an Activity handed to 72 long-lived field objects is a leak waiting
     // for the SDK to change.
     private val catalog by lazy { FieldCatalog.build("bignum", KarooSystemService(applicationContext)) }
 
