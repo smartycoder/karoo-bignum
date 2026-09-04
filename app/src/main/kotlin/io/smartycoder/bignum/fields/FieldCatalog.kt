@@ -115,13 +115,17 @@ object FieldCatalog {
             SimpleField(extension, "distanceToNextTurn", karoo, DataType.Type.DISTANCE_TO_NEXT_TURN, "TO TURN", R.drawable.ic_distance, Formatters.distance, needsProfile = true, valueField = DataType.Field.DISTANCE_TO_NEXT_TURN, previewValue = 450.0),
             // 39 minutes: the 18.6 km the field above previews, at the demo average speed, so
             // the three navigation fields tell one story in a screenshot.
-            TimeField(extension, "timeToDestination", karoo, DataType.Type.TIME_TO_DESTINATION, "TIME TO DEST", previewValue = 2_360_000.0, valueField = DataType.Field.TIME_TO_DESTINATION),
+            TimeField(extension, "timeToDestination", karoo, DataType.Type.TIME_TO_DESTINATION, "TIME TO DEST", previewValue = 2_360_000.0, valueField = DataType.Field.TIME_TO_DESTINATION, missingValue = null),
             SimpleField(extension, "timeOfArrival", karoo, DataType.Type.TIME_OF_ARRIVAL, "ETA", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", raisedTailAllowed = false, previewValue = 1_787_495_700_000.0),
 
             // Time and environment
             TimeField(extension, "elapsed", karoo, DataType.Type.ELAPSED_TIME, "TIME", previewValue = 5_073_000.0, demoInTestMode = false),
-            // Shorter than the elapsed time above it by the length of a coffee stop.
-            TimeField(extension, "rideTime", karoo, DataType.Type.RIDE_TIME, "RIDE TIME", previewValue = 4_712_000.0, demoInTestMode = false),
+            // Longer than the field above it by the length of a coffee stop. The SDK's names for
+            // the two are the other way round from their meanings: RIDE_TIME is documented as
+            // "Total Time -- time since this ride began, including paused time", while
+            // ELAPSED_TIME is "Ride Time -- time spent recording". The labels follow the
+            // documented meaning, not the constant.
+            TimeField(extension, "totalTime", karoo, DataType.Type.RIDE_TIME, "TOTAL TIME", previewValue = 5_680_000.0, demoInTestMode = false),
             // The wall clock opts out of the demo value for the reason the ride clock does: it
             // runs with nothing paired, so a frozen one reads as a broken field.
             SimpleField(extension, "clockTime", karoo, DataType.Type.CLOCK_TIME, "CLOCK", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", raisedTailAllowed = false, previewValue = CLOCK_PREVIEW, demoInTestMode = false),

@@ -87,7 +87,7 @@
 
     <!-- Time and environment -->
     <DataType displayName="@string/df_elapsed"   graphical="true" icon="@drawable/ic_clock" typeId="elapsed"     description="@string/df_elapsed_desc"/>
-    <DataType displayName="@string/df_ride_time" graphical="true" icon="@drawable/ic_clock" typeId="rideTime" description="@string/df_ride_time_desc"/>
+    <DataType displayName="@string/df_total_time" graphical="true" icon="@drawable/ic_clock" typeId="totalTime" description="@string/df_total_time_desc"/>
     <DataType displayName="@string/df_clock" graphical="true" icon="@drawable/ic_clock" typeId="clockTime" description="@string/df_clock_desc"/>
     <DataType displayName="@string/df_sunrise" graphical="true" icon="@drawable/ic_clock" typeId="sunrise" description="@string/df_sunrise_desc"/>
     <DataType displayName="@string/df_sunset" graphical="true" icon="@drawable/ic_clock" typeId="sunset" description="@string/df_sunset_desc"/>

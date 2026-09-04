@@ -16,7 +16,9 @@ Karoo shows in its own update flow.
 
 - Twelve more fields, each filling a gap rather than adding a variant for its own sake:
   **Clock** (the plain time of day, which the ETA and the two sun times had left oddly missing),
-  **Time - Riding** (moving time, against the elapsed time that counts the stops too),
+  **Time - Total** (the whole ride including its stops, against the elapsed time that counts
+  only what was recorded -- the SDK names those two streams the other way round from their
+  meanings, so the labels here follow the documentation rather than the constant),
   **Nav - Time to Destination** (how long is left, beside the distance and the arrival clock
   that were already there), **Power - % of FTP** (what HR - % of Max is to heart rate),
   **Lap - Max HR** (the lap group had a maximum for speed, cadence and power but not heart

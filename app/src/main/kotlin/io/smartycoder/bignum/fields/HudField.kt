@@ -130,7 +130,7 @@ class HudField(
                     // against catalog.ids, so a miss should be impossible -- but a throw inside
                     // scope.launch is NOT caught by SupervisorJob (that only stops a failing
                     // child from cancelling its siblings); it reaches the default handler and
-                    // takes the whole extension process down mid-ride, all 58 fields on every
+                    // takes the whole extension process down mid-ride, all 72 fields on every
                     // page with it. The elvis costs nothing.
                     val l = catalog.byId(left) ?: catalog.first()
                     val r = catalog.byId(right) ?: catalog.first()

@@ -1,6 +1,7 @@
 package io.smartycoder.bignum.fields
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
@@ -45,9 +46,17 @@ class CatalogRegistrationTest {
             .map { it.groupValues[1] }
             .toList()
 
-    @Test fun `both lists were actually found, so an empty pass cannot pass for agreement`() {
-        assert(catalogIds.size > 50) { "only found ${catalogIds.size} catalogue ids" }
-        assert(declaredIds.size > 50) { "only found ${declaredIds.size} declared ids" }
+    /**
+     * The id regex only matches a constructor written on one line, which every catalogue entry
+     * is today. Should one ever be wrapped, it would fall out of both sides of the comparison
+     * at once and the test would pass without having looked at it, so count the constructions
+     * independently of the pattern that reads their ids.
+     */
+    @Test fun `every catalogue construction was read, so none can slip past unmatched`() {
+        val constructions = Regex("""^\s+\w+\(extension,""", RegexOption.MULTILINE)
+            .findAll(File(fields, "FieldCatalog.kt").readText()).count()
+        assertEquals("constructions the id regex did not match", constructions, catalogIds.size)
+        assertTrue("only found ${declaredIds.size} declared ids", declaredIds.size > 50)
     }
 
     @Test fun `the picker declares every catalogue field and nothing else`() {

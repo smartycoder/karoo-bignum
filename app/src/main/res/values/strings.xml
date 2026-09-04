@@ -175,8 +175,8 @@
     <string name="df_lap_max_hr_desc">Highest heart rate in the current lap.</string>
     <string name="df_time_to_dest">Nav - Time to Destination</string>
     <string name="df_time_to_dest_desc">Time left to the destination, h:mm:ss.</string>
-    <string name="df_ride_time">Time - Riding</string>
-    <string name="df_ride_time_desc">Moving time, without the stops, h:mm:ss.</string>
+    <string name="df_total_time">Time - Total</string>
+    <string name="df_total_time_desc">Time since the ride began, stops included, h:mm:ss.</string>
     <string name="df_clock">Clock</string>
     <string name="df_clock_desc">Time of day, h:mm.</string>
     <string name="df_sunrise">Sunrise</string>
