@@ -45,7 +45,7 @@ class ZonePillValueTest {
             // aim can only ever be met to the nearest reachable step -- the probe that found
             // this measured 25px of text size giving 22px of ink and 26px giving 23, with
             // nothing in between.
-            val wanted = pillHeight * 0.605
+            val wanted = pillHeight * 0.66
             assertTrue(
                 "$face: ink $ink of $pillHeight, wanted about ${"%.1f".format(wanted)}",
                 kotlin.math.abs(ink - wanted) <= 1.5,

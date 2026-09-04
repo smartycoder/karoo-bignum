@@ -64,14 +64,24 @@ object ZoneBar {
  *
  * A fraction and not a dp value so the bump scales with the row on a screen of another density --
  * which is also why it had to be retuned rather than left alone: it scales with a row that moved.
+ *
+ * Then 0.66, with the icon and the squares raised alongside it. Measured in the 38px pill, the
+ * tallest thing in it left 8px unused above and below; the three fractions here now spend most
+ * of that rather than leaving the pill's contents floating in the middle of it.
  */
-private const val TEXT_INK_FRACTION = 0.605f
+private const val TEXT_INK_FRACTION = 0.66f
 
-/** The icon's height, as a share of the pill's height. Larger than the text, as in a header. */
-private const val ICON_HEIGHT_FRACTION = 0.62f
+/**
+ * The icon's height, as a share of the pill's height. Larger than the text, as in a header.
+ *
+ * This is the icon's BOX, not its ink. The vectors carry their own margin inside a 24dp
+ * viewport, so a 0.62 box measured 23.6px in the 38px pill and drew 18px of heart -- which is
+ * why the icon read smaller than the value beside it despite the larger fraction.
+ */
+private const val ICON_HEIGHT_FRACTION = 0.74f
 
 /** A zone square's side, as a share of the pill's height. */
-private const val SEGMENT_FRACTION = 0.30f
+private const val SEGMENT_FRACTION = 0.38f
 
 /** Gap between two squares, as a share of the pill's height. */
 private const val SEGMENT_GAP_FRACTION = 0.09f
