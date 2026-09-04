@@ -6,7 +6,7 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Each entry here should match the `releaseNotes` field in `app/manifest.json`, which is what the
 Karoo shows in its own update flow.
 
-## [Unreleased]
+## [1.4.0] - 2026-09-04
 
 ### Added
 
@@ -39,6 +39,25 @@ Karoo shows in its own update flow.
   a large **15** with a small `14`. **Nav - ETA** was drawn whole and the three clocks added
   here followed it, which left every clock-shaped field on a page shrinking its tail except
   those four.
+
+- **The HUD's zone bar becomes a zone pill.** Where a bar filled the whole top of the tile, a
+  lozenge now sits in the middle of the row the two labels already occupy, carrying its source's
+  icon, one small square per zone with everything up to your current one lit, and the live value.
+  Squares rather than a fill, because a zone is a thing you count at a glance on a moving bike.
+  **Zone pill style** offers **Solid color** instead, which drops the squares and fills the pill
+  with the zone colour. On a field too narrow for two labels and a pill, the labels fall back to
+  their icons before the pill gives up its squares; if even that will not fit, the pill hides and
+  the labels return. Neither number gives up any height for it, and the pill's source stays the
+  separate choice it was.
+
+- Every field's label sits 2px higher and its number is drawn taller. The number was never
+  floating in its box -- it already filled every pixel it was given -- so the room came from the
+  clearance around it: 2px off the top of the label row, and 5px each off the gap under the label
+  and the gap under the number. Measured on a Karoo 3, a 478x180 tile went from 126px of digit to
+  135.
+
+- The zone pill's icon, squares and value are all larger. The tallest thing in a 38px pill was
+  leaving 8px unused above and below it.
 
 - **Time - Elapsed** is now **Time - Riding**, labelled `RIDE TIME` on the tile instead of
   `TIME`. It is unchanged in what it counts -- time spent recording, stops excluded, which is

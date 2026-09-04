@@ -1,6 +1,6 @@
 ---
 name: release
-description: "Publish a BigNum release to GitHub so the Karoo extension library picks it up. Use when cutting a release, tagging a version, publishing an update, or when asked why an update is not reaching riders. Covers the build, the signing check, the manifest, and verifying the published URLs. Triggers on: release, izdaja, objavi verzijo, nova verzija, tag, deploy, publish."
+description: "Publish a BigNum release to GitHub so the Karoo extension library picks it up. Use when cutting a release, tagging a version, publishing an update, or when asked why an update is not reaching riders. Covers preparing the version and changelog, the build, the signing check, the manifest, and verifying the published URLs. Triggers on: release, izdaja, objavi verzijo, nova verzija, tag, deploy, publish."
 ---
 
 # Releasing BigNum
@@ -27,6 +27,32 @@ Both real failures are worth knowing, because they look nothing alike:
   one big script.
 
 ## Steps
+
+### 0. Prepare the version — before any of the below
+
+The rest of this procedure CHECKS a release; it does not prepare one. Nothing here decides the
+version for the user, and step 2 will refuse to go on until all four of these agree.
+
+Four things have to be done by hand first, in this order:
+
+1. **Pick the version.** Read `git log` since the last tag and judge it: new fields or a
+   redesigned element is a MINOR bump, a fix alone is a PATCH. Breaking an existing rider's
+   configuration would be MAJOR -- but check before assuming one, because it is rarer than it
+   looks: field ids are what saved pages and HUD slots are keyed on, so renaming what a field is
+   *called* breaks nothing. Say what you think it is and why, and let the user settle it.
+2. **Close the changelog.** `## [Unreleased]` becomes `## [x.y.z] - YYYY-MM-DD`. Before doing it,
+   read the section against `git log` since the last tag and check that everything a rider would
+   NOTICE is in it. A whole feature has arrived on `main` with no entry before -- a branch merged
+   with its README prose updated and its changelog forgotten, which nothing else in this
+   procedure would have caught until step 4.
+3. **Bump `app/build.gradle.kts`:** `versionName` to the chosen version, `versionCode` to exactly
+   one more than the last release's.
+4. **Sync `app/manifest.json`:** `latestVersion` and `latestVersionCode` to match the above, and
+   rewrite `releaseNotes` -- condensed prose for the Karoo's own update flow, not a copy of the
+   changelog. Write it for a rider deciding whether to update, in the present tense, and describe
+   what the build DOES rather than what changed in the code.
+
+Then run the steps below, which will tell you if any of the four disagree.
 
 ### 1. Preconditions
 
