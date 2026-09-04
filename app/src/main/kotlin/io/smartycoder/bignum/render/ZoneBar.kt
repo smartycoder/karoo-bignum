@@ -55,11 +55,17 @@ object ZoneBar {
  * makes the value the same height in any face, which is what [FieldRenderer.renderHeader] already
  * does with its label.
  *
- * Tuned by eye on the device rather than derived: 0.52 put 24px of digit in the Karoo 3's 46px
- * pill and read small next to the two labels beside it. A fraction and not a dp value so the bump
- * scales with the row on a screen of another density.
+ * Tuned by eye on the device rather than derived, and retuned twice. 0.52 put 24px of digit in
+ * the Karoo 3's 46px pill and read small next to the two labels beside it; 0.565 fixed that. Then
+ * the header row was shortened to give the numbers below it more room, and since the pill is
+ * sized from that row it lost 5px of height -- taking the value down with it, from 24px of ink to
+ * 21px, undoing the earlier fix without anything about the pill changing. 0.605 puts it at 23px in the 38px
+ * pill that row now leaves -- two more than before, which is what was asked for.
+ *
+ * A fraction and not a dp value so the bump scales with the row on a screen of another density --
+ * which is also why it had to be retuned rather than left alone: it scales with a row that moved.
  */
-private const val TEXT_INK_FRACTION = 0.565f
+private const val TEXT_INK_FRACTION = 0.605f
 
 /** The icon's height, as a share of the pill's height. Larger than the text, as in a header. */
 private const val ICON_HEIGHT_FRACTION = 0.62f
@@ -122,12 +128,24 @@ fun zonePillWidth(
  */
 private fun valueTextSize(paint: Paint, h: Float): Float {
     val target = h * TEXT_INK_FRACTION
-    paint.textSize = target
     val ink = Rect()
-    paint.getTextBounds("0", 0, 1, ink)
-    // Guarded, because a face that measures nothing would turn this into a division by zero and
-    // put a NaN text size on the paint.
-    return if (ink.height() > 0) target * target / ink.height() else target
+    var size = target
+    // Corrected repeatedly rather than once. A single ratio assumes ink height scales
+    // continuously with text size; it does not -- getTextBounds returns whole pixels and hinting
+    // steps them -- so one pass lands close and not on. Measured on a Karoo 3: aiming at 23.5px
+    // of digit in a 38px pill, one pass produced 22, which is most of a retune thrown away.
+    // Three passes because the second is already within a pixel and the third costs nothing that
+    // matters at this call rate.
+    repeat(3) {
+        paint.textSize = size
+        paint.getTextBounds("0", 0, 1, ink)
+        // Guarded, because a face that measures nothing would turn this into a division by zero
+        // and put a NaN text size on the paint.
+        if (ink.height() <= 0) return size
+        size *= target / ink.height()
+    }
+    paint.textSize = size
+    return size
 }
 
 /**
