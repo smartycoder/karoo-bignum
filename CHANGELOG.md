@@ -11,8 +11,8 @@ Karoo shows in its own update flow.
 ### Added
 
 - **Sunrise** and **Sunset**, under Time & environment. Both read a wall clock in 24-hour form,
-  drawn whole rather than with raised minutes, the way Nav - ETA already is. The Karoo works
-  the two times out from where you are, so they stay at `--` until it has a position fix.
+  the way Nav - ETA does. The Karoo works the two times out from where you are, so they stay at
+  `--` until it has a position fix.
 
 - Twelve more fields, each filling a gap rather than adding a variant for its own sake:
   **Clock** (the plain time of day, which the ETA and the two sun times had left oddly missing),
