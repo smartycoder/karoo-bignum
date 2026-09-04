@@ -128,7 +128,10 @@ object FieldCatalog {
             SimpleField(extension, "timeOfArrival", karoo, DataType.Type.TIME_OF_ARRIVAL, "ETA", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", raisedTailAllowed = false, previewValue = ETA_PREVIEW),
 
             // Time and environment
-            TimeField(extension, "elapsed", karoo, DataType.Type.ELAPSED_TIME, "TIME", previewValue = 5_073_000.0, demoInTestMode = false),
+            // Labelled for what karoo-ext documents ELAPSED_TIME as -- "Ride Time, time spent
+            // recording" -- not for the constant, which reads like the opposite. The typeId
+            // stays "elapsed": it is what saved pages and HUD slots are keyed on.
+            TimeField(extension, "elapsed", karoo, DataType.Type.ELAPSED_TIME, "RIDE TIME", previewValue = 5_073_000.0, demoInTestMode = false),
             // Longer than the field above it by the length of a coffee stop. The SDK's names for
             // the two are the other way round from their meanings: RIDE_TIME is documented as
             // "Total Time -- time since this ride began, including paused time", while

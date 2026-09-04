@@ -53,7 +53,7 @@ Lap - Max Power · Lap - W/kg · Lap - VAM · Lap - Ascent · Lap - Descent
 
 **Navigation** — Nav - To Destination · Nav - To Next Turn · Nav - Time to Destination · Nav - ETA
 
-**Time & environment** — Time - Elapsed · Time - Total · Clock · Sunrise · Sunset ·
+**Time & environment** — Time - Riding · Time - Total · Clock · Sunrise · Sunset ·
 Temperature · Battery
 
 **Composite** — HUD - Two Fields
@@ -63,7 +63,7 @@ clock in 24-hour form, drawn whole rather than with raised minutes. **Clock**, *
 **Sunset** are drawn the same way; the Karoo works the two sun times out from where you are, so
 they need a position fix before they read anything.
 
-**Time - Elapsed** is the recording clock and stops when the ride does; **Time - Total** runs
+**Time - Riding** is the recording clock and stops when the ride does; **Time - Total** runs
 from the start of the ride and keeps counting through the stops, so it is the longer of the two
 on any ride with a coffee in it.
 

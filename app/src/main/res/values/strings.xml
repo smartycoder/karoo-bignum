@@ -13,7 +13,7 @@
     <string name="df_cadence_desc">Cadence in rpm.</string>
     <string name="df_distance">Distance</string>
     <string name="df_distance_desc">Ride distance.</string>
-    <string name="df_elapsed">Time - Elapsed</string>
+    <string name="df_elapsed">Time - Riding</string>
     <string name="df_elapsed_desc">Time spent recording, stops excluded, h:mm:ss.</string>
     <string name="df_avg_hr">HR - Avg</string>
     <string name="df_avg_hr_desc">Average heart rate, zone-colored.</string>
