@@ -3,11 +3,11 @@
   "packageName": "io.smartycoder.bignum",
   "iconUrl": "https://github.com/smartycoder/karoo-bignum/raw/main/docs/icon.png",
   "latestApkUrl": "https://github.com/smartycoder/karoo-bignum/releases/latest/download/app-release.apk",
-  "latestVersion": "1.4.0",
-  "latestVersionCode": 8,
+  "latestVersion": "1.4.1",
+  "latestVersionCode": 9,
   "developer": "smartycoder",
   "description": "Large, bold numeric data fields with optional HR and power zone coloring.",
-  "releaseNotes": "Fourteen new fields: sunrise, sunset, the time of day, total ride time, time to destination, power as a % of FTP, lap max HR, battery, and smoothed speed and cadence at 3s, 5s and 10s. The HUD's zone bar is now a pill in the middle of the label row, showing your zone as squares you can count, or as a solid colour if you prefer. Labels sit higher and every number is drawn taller. Time - Elapsed is now called Time - Riding, since Total Time sits beside it.",
+  "releaseNotes": "The VAM fields now show your rate of ascent in m/h (or ft/h) instead of sitting at 0. Distance keeps its decimal past 100 km, so 100.6 no longer reads as 101.",
   "tags": [
     "datafield",
     "numeric"

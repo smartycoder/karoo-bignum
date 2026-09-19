@@ -6,6 +6,18 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Each entry here should match the `releaseNotes` field in `app/manifest.json`, which is what the
 Karoo shows in its own update flow.
 
+## [1.4.1] - 2026-09-19
+
+### Fixed
+
+- **Climb - VAM**, **Climb - VAM Avg** and **Lap - VAM** read 0 on every climb, while the
+  Karoo's own VAM field showed 500 to 1100. The Karoo sends these in metres per second rather
+  than the metres per hour its documentation promises, and BigNum showed that number as it came.
+  They now read in m/h, or ft/h if your elevation is set to imperial, and go negative on a
+  descent.
+- Distance dropped its decimal once a ride passed 100 km, so 100.6 read as 101. Every distance
+  field now keeps the tenth; past 100 the number is drawn slightly smaller so it still fits.
+
 ## [1.4.0] - 2026-09-04
 
 ### Added
@@ -247,7 +259,9 @@ First public release.
 - The rounded card behind each field is drawn by Karoo. On a ride page it does not clip the
   extension's view to that card, so the fill rounds its own corners to match.
 
-[Unreleased]: https://github.com/smartycoder/karoo-bignum/compare/v1.3.1...HEAD
+[Unreleased]: https://github.com/smartycoder/karoo-bignum/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.4.1
+[1.4.0]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.4.0
 [1.3.1]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.3.1
 [1.3.0]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.3.0
 [1.2.1]: https://github.com/smartycoder/karoo-bignum/releases/tag/v1.2.1
