@@ -12,6 +12,6 @@ class DistanceField(extension: String, karoo: KarooSystemService)
     override val iconRes = R.drawable.ic_distance
     override val zoneKind = null
     override val format = Formatters.distance
-    override val previewValue = 34_200.0
+    override val previewValue = 104_600.0
     override fun formatNeedsProfile() = true
 }

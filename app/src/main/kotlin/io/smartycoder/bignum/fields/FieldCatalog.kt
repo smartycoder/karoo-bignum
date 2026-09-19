@@ -92,8 +92,8 @@ object FieldCatalog {
             ElevationField(extension, karoo),
             SimpleField(extension, "descent", karoo, DataType.Type.ELEVATION_LOSS, "DESCENT", R.drawable.ic_elevation, Formatters.elevation, needsProfile = true, previewValue = 873.0),
             GradeField(extension, karoo),
-            SimpleField(extension, "vam", karoo, DataType.Type.VERTICAL_SPEED, "VAM", R.drawable.ic_elevation, Formatters.count, widthTemplate = "0000", previewValue = 720.0),
-            SimpleField(extension, "avgVam", karoo, DataType.Type.AVERAGE_VERTICAL_SPEED, "AVG VAM", R.drawable.ic_elevation, Formatters.count, widthTemplate = "0000", previewValue = 610.0),
+            SimpleField(extension, "vam", karoo, DataType.Type.VERTICAL_SPEED, "VAM", R.drawable.ic_elevation, Formatters.vam, needsProfile = true, widthTemplate = "0000", previewValue = 720.0 / 3600),
+            SimpleField(extension, "avgVam", karoo, DataType.Type.AVERAGE_VERTICAL_SPEED, "AVG VAM", R.drawable.ic_elevation, Formatters.vam, needsProfile = true, widthTemplate = "0000", previewValue = 610.0 / 3600),
             SimpleField(extension, "distanceToTop", karoo, DataType.Type.DISTANCE_TO_TOP, "TO TOP", R.drawable.ic_distance, Formatters.distance, needsProfile = true, previewValue = 2400.0),
             SimpleField(extension, "elevationToTop", karoo, DataType.Type.ELEVATION_TO_TOP, "ELEV TOP", R.drawable.ic_elevation, Formatters.elevation, needsProfile = true, previewValue = 185.0),
 
@@ -113,7 +113,7 @@ object FieldCatalog {
             // Karoo delivers this one already in W/kg, so it is a plain field rather than a
             // SmoothedPowerToWeightField dividing watts by the rider weight.
             SimpleField(extension, "lapPowerToWeight", karoo, DataType.Type.POWER_TO_WEIGHT_LAP, "W/KG lap", R.drawable.ic_bolt, Formatters.wattsPerKg, previewValue = 3.2),
-            SimpleField(extension, "lapVam", karoo, DataType.Type.AVERAGE_VERTICAL_SPEED_LAP, "VAM lap", R.drawable.ic_elevation, Formatters.count, widthTemplate = "0000", previewValue = 680.0),
+            SimpleField(extension, "lapVam", karoo, DataType.Type.AVERAGE_VERTICAL_SPEED_LAP, "VAM lap", R.drawable.ic_elevation, Formatters.vam, needsProfile = true, widthTemplate = "0000", previewValue = 680.0 / 3600),
             SimpleField(extension, "lapAscent", karoo, DataType.Type.ELEVATION_GAIN_LAP, "ASCENT lap", R.drawable.ic_elevation, Formatters.elevation, needsProfile = true, previewValue = 214.0),
             SimpleField(extension, "lapDescent", karoo, DataType.Type.ELEVATION_LOSS_LAP, "DESCENT lap", R.drawable.ic_elevation, Formatters.elevation, needsProfile = true, previewValue = 168.0),
 

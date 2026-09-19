@@ -41,10 +41,12 @@ object Formatters {
     val percent: (Double, PreferredUnit?) -> Pair<String, String> =
         { v, _ -> compact(v) to "%" }
 
+    // Always one decimal, not compact: past 100 km a rider still wants the tenth, so "100.6"
+    // is drawn a little smaller than the "00.0" budget rather than rounded to "101".
     val distance: (Double, PreferredUnit?) -> Pair<String, String> = { v, p ->
         when (p?.distance) {
-            UnitType.IMPERIAL -> compact(v / 1609.345) to "mi"
-            else              -> compact(v / 1000.0)   to "km"
+            UnitType.IMPERIAL -> "%.1f".fmt(v / 1609.345) to "mi"
+            else              -> "%.1f".fmt(v / 1000.0)   to "km"
         }
     }
 
@@ -52,6 +54,15 @@ object Formatters {
         when (p?.elevation) {
             UnitType.IMPERIAL -> "${(v * 3.28084).toInt()}" to "ft"
             else              -> "${v.toInt()}"            to "m"
+        }
+    }
+
+    // karoo-ext documents the VERTICAL_SPEED types as meters/hour, but a K24 streams m/s: a
+    // logged 944 m/h climb arrived as 0.24-0.26. Printed raw, every VAM field read 0 (issue #3).
+    val vam: (Double, PreferredUnit?) -> Pair<String, String> = { v, p ->
+        when (p?.elevation) {
+            UnitType.IMPERIAL -> "${Math.round(v * 3600 * 3.28084)}" to "ft/h"
+            else              -> "${Math.round(v * 3600)}"           to "m/h"
         }
     }
 

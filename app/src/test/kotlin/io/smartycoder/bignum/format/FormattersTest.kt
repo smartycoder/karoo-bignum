@@ -67,6 +67,19 @@ class FormattersTest {
         assertEquals(1.0, v.toDouble(), 0.01)
     }
 
+    // ── VAM (input m/s, measured on a K24 despite karoo-ext documenting m/h) ─
+    @Test fun `vam metric — m per s to m per h`() {
+        assertEquals("944" to "m/h", Formatters.vam(0.2622, metric))
+    }
+
+    @Test fun `vam imperial — m per s to ft per h`() {
+        assertEquals("3281" to "ft/h", Formatters.vam(0.2778, imperial))
+    }
+
+    @Test fun `vam keeps the sign on a descent`() {
+        assertEquals("-6332" to "m/h", Formatters.vam(-1.759, metric))
+    }
+
     // ── elevation (input meters) ───────────────────────────────────────────
     @Test fun `elevation metric — integer meters`() {
         assertEquals("742" to "m", Formatters.elevation(742.7, metric))
@@ -145,9 +158,10 @@ class FormattersTest {
     }
 
     @Test
-    fun `distance drops the decimal at and above 100`() {
+    fun `distance keeps the decimal at and above 100`() {
         assertEquals("99.9", Formatters.distance(99_900.0, null).first)
-        assertEquals("120", Formatters.distance(120_000.0, null).first)
+        assertEquals("100.6", Formatters.distance(100_600.0, null).first)
+        assertEquals("120.0", Formatters.distance(120_000.0, null).first)
     }
 
     @Test
