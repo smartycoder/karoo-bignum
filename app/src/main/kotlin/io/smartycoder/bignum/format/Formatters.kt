@@ -55,6 +55,15 @@ object Formatters {
         }
     }
 
+    // karoo-ext documents the VERTICAL_SPEED types as meters/hour, but a K24 streams m/s: a
+    // logged 944 m/h climb arrived as 0.24-0.26. Printed raw, every VAM field read 0 (issue #3).
+    val vam: (Double, PreferredUnit?) -> Pair<String, String> = { v, p ->
+        when (p?.elevation) {
+            UnitType.IMPERIAL -> "${Math.round(v * 3600 * 3.28084)}" to "ft/h"
+            else              -> "${Math.round(v * 3600)}"           to "m/h"
+        }
+    }
+
     val temperature: (Double, PreferredUnit?) -> Pair<String, String> = { v, p ->
         when (p?.temperature) {
             UnitType.IMPERIAL -> "${(v * 9.0 / 5.0 + 32).toInt()}" to "°F"

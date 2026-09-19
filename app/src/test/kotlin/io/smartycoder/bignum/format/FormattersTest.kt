@@ -67,6 +67,19 @@ class FormattersTest {
         assertEquals(1.0, v.toDouble(), 0.01)
     }
 
+    // ── VAM (input m/s, measured on a K24 despite karoo-ext documenting m/h) ─
+    @Test fun `vam metric — m per s to m per h`() {
+        assertEquals("944" to "m/h", Formatters.vam(0.2622, metric))
+    }
+
+    @Test fun `vam imperial — m per s to ft per h`() {
+        assertEquals("3281" to "ft/h", Formatters.vam(0.2778, imperial))
+    }
+
+    @Test fun `vam keeps the sign on a descent`() {
+        assertEquals("-6332" to "m/h", Formatters.vam(-1.759, metric))
+    }
+
     // ── elevation (input meters) ───────────────────────────────────────────
     @Test fun `elevation metric — integer meters`() {
         assertEquals("742" to "m", Formatters.elevation(742.7, metric))
