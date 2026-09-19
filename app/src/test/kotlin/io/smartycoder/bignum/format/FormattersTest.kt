@@ -158,9 +158,10 @@ class FormattersTest {
     }
 
     @Test
-    fun `distance drops the decimal at and above 100`() {
+    fun `distance keeps the decimal at and above 100`() {
         assertEquals("99.9", Formatters.distance(99_900.0, null).first)
-        assertEquals("120", Formatters.distance(120_000.0, null).first)
+        assertEquals("100.6", Formatters.distance(100_600.0, null).first)
+        assertEquals("120.0", Formatters.distance(120_000.0, null).first)
     }
 
     @Test
