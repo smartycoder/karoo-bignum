@@ -38,6 +38,10 @@ object Formatters {
     val rpm: (Double, PreferredUnit?) -> Pair<String, String> =
         { v, _ -> "${v.toInt()}" to "rpm" }
 
+    /** A bare number to the tenth: the heat strain index and the heat training load, 0 to 10. */
+    val tenths: (Double, PreferredUnit?) -> Pair<String, String> =
+        { v, _ -> "%.1f".fmt(v) to "" }
+
     val percent: (Double, PreferredUnit?) -> Pair<String, String> =
         { v, _ -> compact(v) to "%" }
 
@@ -70,6 +74,18 @@ object Formatters {
         when (p?.temperature) {
             UnitType.IMPERIAL -> "${(v * 9.0 / 5.0 + 32).toInt()}" to "°F"
             else              -> "${v.toInt()}"                    to "°C"
+        }
+    }
+
+    /**
+     * A body temperature, kept to the tenth. The whole-degree [temperature] suits the air, but
+     * core temperature spends a ride inside two or three degrees, and the difference between
+     * 38.1 and 38.9 is the whole reason to have the field.
+     */
+    val bodyTemperature: (Double, PreferredUnit?) -> Pair<String, String> = { v, p ->
+        when (p?.temperature) {
+            UnitType.IMPERIAL -> "%.1f".fmt(v * 9.0 / 5.0 + 32) to "°F"
+            else              -> "%.1f".fmt(v)                  to "°C"
         }
     }
 

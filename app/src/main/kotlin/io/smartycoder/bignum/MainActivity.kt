@@ -5,10 +5,13 @@ import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.Button
 import android.widget.CompoundButton
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -18,6 +21,9 @@ import android.widget.Switch
 import android.widget.TextView
 import io.hammerhead.karooext.KarooSystemService
 import io.smartycoder.bignum.fields.FieldCatalog
+import io.smartycoder.bignum.heat.CoreLinkState
+import io.smartycoder.bignum.heat.CoreSensorLink
+import io.smartycoder.bignum.heat.HeatTracker
 import io.smartycoder.bignum.fields.ids
 import io.smartycoder.bignum.fields.zoneCapable
 
@@ -25,9 +31,14 @@ class MainActivity : Activity() {
 
     // Labels only, and applicationContext to match BigNumExtension.onCreate: nothing here
     // connects -- KarooSystemService's constructor only allocates, it binds nothing until
-    // connect() -- but an Activity handed to 72 long-lived field objects is a leak waiting
+    // connect() -- but an Activity handed to every long-lived field object is a leak waiting
     // for the SDK to change.
-    private val catalog by lazy { FieldCatalog.build("bignum", KarooSystemService(applicationContext)) }
+    // The heat tracker is never started here, for the same reason: it is only there to be handed
+    // to the heat fields, whose labels are all this screen reads.
+    private val catalog by lazy {
+        val karoo = KarooSystemService(applicationContext)
+        FieldCatalog.build("bignum", karoo, HeatTracker(applicationContext, karoo))
+    }
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
@@ -164,7 +175,63 @@ class MainActivity : Activity() {
         }
     }
 
+    /** The CORE card's live parts, refreshed while the screen is showing; see [refreshCore]. */
+    private var coreStatus: TextView? = null
+    private var corePermission: Button? = null
+    private val refresher = Handler(Looper.getMainLooper())
+    private val refreshTick = object : Runnable {
+        override fun run() {
+            refreshCore()
+            refresher.postDelayed(this, CORE_REFRESH_MS)
+        }
+    }
+
+    /**
+     * Brings the CORE card up to date. Polled rather than observed: this Activity has no
+     * coroutine scope to collect in, and the link changes state on the scale of seconds.
+     */
+    private fun refreshCore() {
+        val granted = CoreSensorLink.hasPermission(this)
+        corePermission?.visibility = if (granted) View.GONE else View.VISIBLE
+        // The link only notices a new grant on its next check, so until then the permission
+        // itself is the better answer to "is it still missing".
+        val state = CoreSensorLink.state.value.let {
+            if (it == CoreLinkState.NO_PERMISSION && granted) CoreLinkState.WAITING else it
+        }
+        coreStatus?.text = getString(
+            when (state) {
+                CoreLinkState.OFF -> R.string.core_state_off
+                CoreLinkState.WAITING -> R.string.core_state_waiting
+                CoreLinkState.NO_PERMISSION -> R.string.core_state_no_permission
+                CoreLinkState.BLUETOOTH_OFF -> R.string.core_state_bluetooth_off
+                CoreLinkState.SEARCHING -> R.string.core_state_searching
+                CoreLinkState.NOT_FOUND -> R.string.core_state_not_found
+                CoreLinkState.VERIFYING -> R.string.core_state_verifying
+                CoreLinkState.SENSOR_HSI -> R.string.core_state_sensor_hsi
+                CoreLinkState.NO_HSI -> R.string.core_state_no_hsi
+            },
+        )
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refresher.post(refreshTick)
+    }
+
+    override fun onPause() {
+        refresher.removeCallbacks(refreshTick)
+        super.onPause()
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == CORE_PERMISSION_REQUEST) refreshCore()
+    }
+
     private companion object {
+        const val CORE_PERMISSION_REQUEST = 1
+        const val CORE_REFRESH_MS = 1_000L
+
         /** Sampled off the Karoo's own app-store card, so ours sits beside it as a match. */
         const val KAROO_ALERT_YELLOW = 0xFFFFE900.toInt()
 
@@ -470,6 +537,34 @@ class MainActivity : Activity() {
             }
         }
 
+        val coreLink = Switch(this).apply {
+            text = getString(R.string.setting_core_link)
+            textSize = 18f
+            isChecked = Settings.coreSensorLink(context)
+            setOnCheckedChangeListener { _: CompoundButton, checked: Boolean ->
+                Settings.setCoreSensorLink(context, checked)
+            }
+        }
+
+        val coreStatusView = TextView(this).apply {
+            textSize = 15f
+            setTypeface(typeface, Typeface.BOLD)
+            setPadding(0, dp(10), 0, 0)
+        }
+        coreStatus = coreStatusView
+
+        val corePermissionButton = Button(this).apply {
+            text = getString(R.string.core_permission_button)
+            setOnClickListener { requestPermissions(CoreSensorLink.permissions, CORE_PERMISSION_REQUEST) }
+        }
+        corePermission = corePermissionButton
+
+        val coreNote = TextView(this).apply {
+            text = getString(R.string.setting_core_link_desc)
+            textSize = 13f
+            setPadding(0, dp(7), 0, 0)
+        }
+
         // HUD sits last because it is the only section that configures one specific field,
         // after the two that apply to every field. It opens closed like the others: every
         // section's description already says what the card holds, so opening one on arrival only
@@ -497,13 +592,23 @@ class MainActivity : Activity() {
             *globalContent.toTypedArray(),
         )
 
+        // After HUD: it concerns six fields and a sensor most riders do not own.
+        val coreSection = section(
+            getString(R.string.section_core),
+            getString(R.string.section_core_desc),
+            R.drawable.ic_temp,
+            false,
+            coreLink, coreStatusView, corePermissionButton, coreNote,
+        )
+
         val controls = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             // 6dp around the list of cards, 8dp between them, matching Barberfish's spacing.
             setPadding(dp(6), dp(6), dp(6), dp(6))
             addView(appearanceSection, LinearLayout.LayoutParams(MATCH, WRAP).apply { bottomMargin = dp(8) })
             addView(globalSection, LinearLayout.LayoutParams(MATCH, WRAP).apply { bottomMargin = dp(8) })
-            addView(hudSection, LinearLayout.LayoutParams(MATCH, WRAP))
+            addView(hudSection, LinearLayout.LayoutParams(MATCH, WRAP).apply { bottomMargin = dp(8) })
+            addView(coreSection, LinearLayout.LayoutParams(MATCH, WRAP))
         }
 
         val content = LinearLayout(this).apply {

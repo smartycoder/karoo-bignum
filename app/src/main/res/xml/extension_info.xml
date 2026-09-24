@@ -3,7 +3,8 @@
     displayName="@string/extension_name"
     icon="@drawable/ic_bignum"
     id="bignum"
-    scansDevices="false">
+    scansDevices="false"
+    fitFile="true">
     <!-- Speed -->
     <DataType displayName="@string/df_speed"     graphical="true" icon="@drawable/ic_speed" typeId="speed"       description="@string/df_speed_desc"/>
     <DataType displayName="@string/df_speed_3s" graphical="true" icon="@drawable/ic_speed" typeId="speed3s" description="@string/df_speed_3s_desc"/>
@@ -93,6 +94,14 @@
     <DataType displayName="@string/df_sunset" graphical="true" icon="@drawable/ic_clock" typeId="sunset" description="@string/df_sunset_desc"/>
     <DataType displayName="@string/df_temp"      graphical="true" icon="@drawable/ic_temp" typeId="temp"        description="@string/df_temp_desc"/>
     <DataType displayName="@string/df_battery" graphical="true" icon="@drawable/ic_battery" typeId="battery" description="@string/df_battery_desc"/>
+
+    <!-- Heat (CORE body temperature sensor) -->
+    <DataType displayName="@string/df_core_temp" graphical="true" icon="@drawable/ic_temp" typeId="coreTemp" description="@string/df_core_temp_desc"/>
+    <DataType displayName="@string/df_skin_temp" graphical="true" icon="@drawable/ic_temp" typeId="skinTemp" description="@string/df_skin_temp_desc"/>
+    <DataType displayName="@string/df_heat_strain" graphical="true" icon="@drawable/ic_temp" typeId="heatStrain" description="@string/df_heat_strain_desc"/>
+    <DataType displayName="@string/df_heat_zone" graphical="true" icon="@drawable/ic_temp" typeId="heatZone" description="@string/df_heat_zone_desc"/>
+    <DataType displayName="@string/df_heat_load" graphical="true" icon="@drawable/ic_temp" typeId="heatLoad" description="@string/df_heat_load_desc"/>
+    <DataType displayName="@string/df_heat_adaptation" graphical="true" icon="@drawable/ic_temp" typeId="heatAdaptation" description="@string/df_heat_adaptation_desc"/>
 
     <!-- Composite -->
     <DataType displayName="@string/df_hud" graphical="true" icon="@drawable/ic_bignum" typeId="hud" description="@string/df_hud_desc"/>

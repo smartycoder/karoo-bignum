@@ -6,6 +6,32 @@ versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Each entry here should match the `releaseNotes` field in `app/manifest.json`, which is what the
 Karoo shows in its own update flow.
 
+## [Unreleased]
+
+### Added
+
+- A **Heat** group for riders with a CORE body temperature sensor:
+  - **Heat - Core Temp** and **Heat - Skin Temp**, to the tenth of a degree.
+  - **Heat - Strain Index** and **Heat - Zone**, CORE's measure of how hard the body is working
+    to stay cool. The Karoo does not pass the sensor's index on, so BigNum reads it from the CORE
+    directly over Bluetooth, and estimates it from the two temperatures until it can. A new
+    **CORE sensor** card in the app grants the Bluetooth permission and shows which one is on
+    screen.
+  - **Heat - Training Load**, today's load from 0 to 10, earned while recording with a heart
+    rate paired.
+  - **Heat - Adaptation**, CORE's Heat Adaptation Score, built up from the daily loads and kept
+    across rides.
+
+  The temperatures, index and zone are colored by heat zone and the score by adaptation level,
+  following the zone color setting like heart rate and power do.
+
+- The heat data the Karoo does not record is now written to the ride's FIT file: the heat strain
+  index and heat zone every second, and a summary with the ride's heat training load, the
+  adaptation score, average and maximum index, and time in each heat zone. The index goes under
+  CORE's own `heat_strain_index` field only when it came from the sensor; an estimate is written
+  as `estimated_heat_strain_index`. Core and skin temperature are left to the Karoo, which
+  already records them.
+
 ## [1.4.1] - 2026-09-19
 
 ### Fixed

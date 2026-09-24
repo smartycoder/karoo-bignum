@@ -106,6 +106,14 @@ abstract class BaseNumericField(
      */
     open fun displayValue(raw: Double, profile: UserProfile?): Double? = raw
 
+    /**
+     * Colour for [raw] on a fixed scale of this field's own, for a field that has no
+     * [UserProfile] zones to be coloured by -- core and skin temperature. Honoured by the zone
+     * colour setting exactly like a zone colour, number or fill; null leaves the default ink.
+     * Ignored when [zoneKind] is set: the rider's own zones win.
+     */
+    open fun bandColor(raw: Double): Int? = null
+
     /** Wedge behind the number for this field's [raw] value. Null for every field but Grade. */
     open fun wedge(raw: Double): Wedge? = null
 
@@ -136,10 +144,18 @@ abstract class BaseNumericField(
      * the HUD field can drive several of these at once, one per slot, without duplicating the
      * combine/compute wiring.
      */
+    /**
+     * Where the value comes from: the Karoo stream [upstreamTypeId] names, for every field that
+     * shows a number the Karoo already has. A field that works its value out itself -- the heat
+     * fields, from the CORE sensor's two temperatures -- hands its own flow in here instead, in
+     * the same shape, so preview, test mode and the missing-value path treat it like any other.
+     */
+    internal open fun sourceFlow(): Flow<StreamState> = karoo!!.streamDataFlow(upstreamTypeId)
+
     internal fun frameFlow(context: Context, preview: Boolean): Flow<Pair<Frame, Appearance>> {
         val needsProfile = zoneKind != null || formatNeedsProfile()
-        val dataFlow = karoo!!.streamDataFlow(upstreamTypeId)
-        val profileFlow = if (needsProfile) karoo.consumerFlow<UserProfile>() else flowOf<UserProfile?>(null)
+        val dataFlow = sourceFlow()
+        val profileFlow = if (needsProfile) karoo!!.consumerFlow<UserProfile>() else flowOf<UserProfile?>(null)
 
         return combine(
             dataFlow,
@@ -255,12 +271,14 @@ abstract class BaseNumericField(
             ?: return Frame(Visual("--", defaultColor, null), null)
         // A rider who turned zone colours off probably means everywhere, including the wedge.
         val wedgeValue = if (mode != ZoneColorMode.OFF) wedge(raw) else null
-        val zone = zoneKind
-            ?.takeIf { mode != ZoneColorMode.OFF }
+        val kind = zoneKind
+        val zone = when {
+            mode == ZoneColorMode.OFF -> null
             // raw, not display: zones are defined on the value the stream carries. A field that
             // shows W/kg derived from watts still has its zone decided by those watts.
-            ?.let { ZoneColors.color(it, raw, profile) }
-            ?: return Frame(Visual(text, defaultColor, null), wedgeValue)
+            kind != null -> ZoneColors.color(kind, raw, profile)
+            else -> bandColor(raw)
+        } ?: return Frame(Visual(text, defaultColor, null), wedgeValue)
         return when (mode) {
             ZoneColorMode.FILL -> Frame(Visual(text, ZoneColors.onColor(zone), zone), wedgeValue)
             else -> Frame(Visual(text, zone, null), wedgeValue)

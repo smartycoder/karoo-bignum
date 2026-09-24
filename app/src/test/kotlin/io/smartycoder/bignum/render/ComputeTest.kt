@@ -32,6 +32,7 @@ class ComputeTest {
         override val demoInTestMode: Boolean = true,
         private val wedgeToReturn: Wedge? = null,
         private val displayOverride: ((Double) -> Double?)? = null,
+        private val band: Int? = null,
     ) : BaseNumericField("test", "test_type", null) {
         override val upstreamTypeId = "test.upstream"
         override val label = "TEST"
@@ -47,6 +48,8 @@ class ComputeTest {
             if (displayOverride != null) displayOverride.invoke(raw) else super.displayValue(raw, profile)
 
         override fun wedge(raw: Double): Wedge? = wedgeToReturn
+
+        override fun bandColor(raw: Double): Int? = band
     }
 
     private fun streaming(value: Double) =
@@ -135,5 +138,21 @@ class ComputeTest {
             mode = ZoneColorMode.TEXT, defaultColor = defaultColor,
         )
         assertEquals(wedge, text.wedge)
+    }
+
+    @Test fun `a band colour is honoured by the zone colour setting like a zone colour`() {
+        val band = 0xFFFFF500.toInt()
+        val field = TestField(band = band)
+        fun at(mode: ZoneColorMode) = field.compute(
+            streaming(38.2), profile = null, preview = false, testMode = false,
+            mode = mode, defaultColor = defaultColor,
+        ).visual
+
+        assertEquals(band, at(ZoneColorMode.TEXT).color)
+        assertNull(at(ZoneColorMode.TEXT).background)
+        assertEquals(band, at(ZoneColorMode.FILL).background)
+        assertEquals(ZoneColors.onColor(band), at(ZoneColorMode.FILL).color)
+        assertEquals(defaultColor, at(ZoneColorMode.OFF).color)
+        assertNull(at(ZoneColorMode.OFF).background)
     }
 }

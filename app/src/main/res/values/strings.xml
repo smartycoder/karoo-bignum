@@ -23,6 +23,18 @@
     <string name="df_grade_desc">Current grade %.</string>
     <string name="df_temp">Temperature</string>
     <string name="df_temp_desc">Ambient temperature.</string>
+    <string name="df_core_temp">Heat - Core Temp</string>
+    <string name="df_core_temp_desc">Core body temperature from a CORE sensor, colored by heat zone.</string>
+    <string name="df_skin_temp">Heat - Skin Temp</string>
+    <string name="df_skin_temp_desc">Skin temperature from a CORE sensor, colored by heat zone.</string>
+    <string name="df_heat_strain">Heat - Strain Index</string>
+    <string name="df_heat_strain_desc">CORE Heat Strain Index, 0 to 10, from core and skin temperature, colored by heat zone.</string>
+    <string name="df_heat_zone">Heat - Zone</string>
+    <string name="df_heat_zone_desc">CORE heat zone, 1 to 4.</string>
+    <string name="df_heat_load">Heat - Training Load</string>
+    <string name="df_heat_load_desc">Today\'s heat training load, 0 to 10, earned while recording with heart rate.</string>
+    <string name="df_heat_adaptation">Heat - Adaptation</string>
+    <string name="df_heat_adaptation_desc">Heat adaptation score from your daily heat training loads, colored by level.</string>
     <string name="df_w_kg">Power - W/kg</string>
     <string name="df_w_kg_desc">Power to weight in W/kg.</string>
     <string name="df_w_kg_3s">Power - W/kg 3s</string>
@@ -108,7 +120,7 @@
     <string name="setting_zone_mode_off">Off</string>
     <string name="setting_zone_mode_text">Number</string>
     <string name="setting_zone_mode_fill">Field background</string>
-    <string name="setting_zone_colors_desc">Color heart rate and power by your Karoo zones. Number colors the value itself; Field background fills the whole field and sets the number in black or white.</string>
+    <string name="setting_zone_colors_desc">Color heart rate and power by your Karoo zones, and the heat fields by CORE heat zone and adaptation level. Number colors the value itself; Field background fills the whole field and sets the number in black or white.</string>
     <string name="setting_zone_pill_style">Zone pill style</string>
     <string name="setting_zone_pill_segments">Zone squares</string>
     <string name="setting_zone_pill_solid">Solid color</string>
@@ -121,6 +133,21 @@
     <string name="setting_font_desc">Saira has equal-width digits, so a value stops shifting sideways, and it can be set narrower — which makes the number taller. Width and weight apply to Saira only. Labels stay in Oswald.</string>
     <string name="setting_raised_tail">Raised decimals</string>
     <string name="setting_raised_tail_desc">Decimals and ride-time seconds drawn small and raised: 34⁹, 1:34¹⁷. Dropping the point leaves the number more room.</string>
+
+    <string name="section_core">CORE sensor</string>
+    <string name="section_core_desc">Heat strain straight from your CORE</string>
+    <string name="setting_core_link">Read heat strain from the sensor</string>
+    <string name="setting_core_link_desc">The Karoo passes on a CORE sensor\'s core and skin temperature, but not the Heat Strain Index the sensor works out itself. With this on, BigNum connects to the sensor over Bluetooth to read it, and first checks against the Karoo\'s own reading that it has your sensor and not a riding partner\'s. Until then, or without Bluetooth, the index is estimated from the two temperatures. A CORE takes up to three Bluetooth connections; if yours has none to spare, pair it to the Karoo over ANT+.</string>
+    <string name="core_permission_button">Allow Bluetooth</string>
+    <string name="core_state_off">Off. Heat strain is estimated.</string>
+    <string name="core_state_waiting">Waiting for the Karoo to connect to a CORE.</string>
+    <string name="core_state_no_permission">Bluetooth permission needed. Heat strain is estimated.</string>
+    <string name="core_state_bluetooth_off">Bluetooth is off. Heat strain is estimated.</string>
+    <string name="core_state_searching">Looking for your CORE…</string>
+    <string name="core_state_not_found">CORE not found over Bluetooth. Heat strain is estimated.</string>
+    <string name="core_state_verifying">Connected, checking it is your sensor…</string>
+    <string name="core_state_sensor_hsi">Connected. Heat strain comes from the sensor.</string>
+    <string name="core_state_no_hsi">Connected, but this sensor does not send heat strain. Update its firmware in the CORE app (0.8.7 or later).</string>
 
     <string name="setting_test_mode">Test mode</string>
     <string name="setting_test_mode_desc">Show demo values in every field instead of live data. For screenshots and layout checks. Debug builds only.</string>

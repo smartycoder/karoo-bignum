@@ -124,6 +124,7 @@ object Settings {
     internal val DEFAULT_SLOTS = "speed" to "hr"
 
     private const val KEY_ZONE_PILL_STYLE = "zone_pill_style"
+    private const val KEY_CORE_SENSOR_LINK = "core_sensor_link"
 
     /** Replaced by [KEY_ZONE_COLOR_MODE]; still read once so an existing install keeps its choice. */
     private const val LEGACY_KEY_ZONE_COLORS = "zone_colors"
@@ -284,6 +285,20 @@ object Settings {
 
     fun hudBarSourceFlow(context: Context, known: Set<String>): Flow<String?> =
         prefFlow(context, setOf(KEY_HUD_BAR)) { hudBarSource(it, known) }
+
+    /**
+     * Whether BigNum connects to the CORE sensor itself to read its Heat Strain Index. On by
+     * default: without it the index is estimated, and the permission it needs is asked for
+     * separately anyway. Off is for a rider whose sensor has no Bluetooth connection to spare.
+     */
+    fun coreSensorLink(context: Context): Boolean = prefs(context).getBoolean(KEY_CORE_SENSOR_LINK, true)
+
+    fun setCoreSensorLink(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_CORE_SENSOR_LINK, enabled).apply()
+    }
+
+    fun coreSensorLinkFlow(context: Context): Flow<Boolean> =
+        prefFlow(context, setOf(KEY_CORE_SENSOR_LINK), ::coreSensorLink)
 
     fun zoneColorModeFlow(context: Context): Flow<ZoneColorMode> =
         prefFlow(context, setOf(KEY_ZONE_COLOR_MODE), ::zoneColorMode)

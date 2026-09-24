@@ -270,4 +270,25 @@ class FormattersTest {
         TimeZone.setDefault(TimeZone.getTimeZone(id))
         try { body() } finally { TimeZone.setDefault(previous) }
     }
+
+    // ── body temperature (input celsius) ───────────────────────────────────
+    @Test fun `body temperature keeps the tenth in celsius`() {
+        assertEquals("38.3" to "°C", Formatters.bodyTemperature(38.27, metric))
+    }
+
+    @Test fun `body temperature keeps the tenth in fahrenheit`() {
+        assertEquals("100.9" to "°F", Formatters.bodyTemperature(38.3, imperial))
+    }
+
+    // ── tenths: heat strain index and heat training load ───────────────────
+    @Test fun `tenths keeps one decimal and no unit`() {
+        assertEquals("4.1" to "", Formatters.tenths(4.08, null))
+        assertEquals("10.0" to "", Formatters.tenths(10.0, null))
+    }
+
+    @Test fun `the heat previews tell one story - their core and skin make their index, in zone 3`() {
+        val hsi = io.smartycoder.bignum.heat.HeatStrain.index(FieldCatalog.CORE_PREVIEW, FieldCatalog.SKIN_PREVIEW)!!
+        assertEquals(Formatters.tenths(FieldCatalog.HSI_PREVIEW, null), Formatters.tenths(hsi, null))
+        assertEquals(3, io.smartycoder.bignum.heat.HeatStrain.zone(hsi))
+    }
 }

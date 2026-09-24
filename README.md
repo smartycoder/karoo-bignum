@@ -56,12 +56,55 @@ Lap - Max Power · Lap - W/kg · Lap - VAM · Lap - Ascent · Lap - Descent
 **Time & environment** — Time - Riding · Time - Total · Clock · Sunrise · Sunset ·
 Temperature · Battery
 
+**Heat** (CORE sensor) — Heat - Core Temp · Heat - Skin Temp · Heat - Strain Index · Heat - Zone ·
+Heat - Training Load · Heat - Adaptation
+
 **Composite** — HUD - Two Fields
 
 The navigation fields need a route loaded; without one they sit at `--`. **Nav - ETA** is a wall
 clock in 24-hour form. **Clock**, **Sunrise** and **Sunset** are drawn the same way; the Karoo
 works the two sun times out from where you are, so they need a position fix before they read
 anything.
+
+The **Heat** fields need a CORE body temperature sensor paired to the Karoo. The Karoo passes on
+its core and skin temperature; everything else is worked out by BigNum, following CORE's own
+definitions:
+
+- **Heat - Strain Index** (HSI, 0–10) is the sensor's own. The CORE broadcasts it, but the Karoo
+  does not pass it on, so BigNum connects to the sensor over Bluetooth to read it. Until that
+  connection is up, or without it, the index is estimated from core and skin temperature using the
+  zone chart CORE publishes. **Heat - Zone** is CORE's four zones on it: 1 (0–0.9), 2 (1.0–2.9),
+  3 (3.0–6.9, the one to train in) and 4 (7.0+). Both, and the two temperatures, are colored by
+  the current heat zone in CORE's colors.
+- **Heat - Training Load** (0–10) is today's total, built up from time spent at an elevated HSI.
+  Like CORE, it only counts while a ride is recording with a heart rate coming in.
+- **Heat - Adaptation** (0–100 %) is the Heat Adaptation Score, raised by days with a load above 2
+  and decaying after two days without one. It is colored by CORE's four levels: Thermal Rookie,
+  Heat Accustomed, Heat Adapted and Heat Champion.
+
+Reading the index from the sensor needs Bluetooth permission: grant it in the **CORE sensor** card
+of the BigNum app, which also shows whether the index on screen is the sensor's or the estimate.
+The sensor's index needs CORE firmware 0.8.7 or later. BigNum only uses a sensor once its core and
+skin temperatures match the Karoo's own reading, so on a group ride it will not latch onto a riding
+partner's CORE. A CORE accepts up to three Bluetooth connections; if the Karoo, your phone and a
+watch already hold them, pair the CORE to the Karoo over ANT+ to leave one free.
+
+The Karoo records a CORE's core and skin temperature in the ride's FIT file itself. BigNum adds
+the heat data it cannot record, as developer fields:
+
+- every second: the index, as `heat_strain_index` — the field name CORE asks recording devices to
+  use — when it comes from the sensor, or as `estimated_heat_strain_index` when it is BigNum's
+  estimate, so no analysis tool mistakes one for the other; and `heat_zone`.
+- in the ride summary: `heat_training_load` (this ride's share of the day), `heat_adaptation_score`,
+  `avg_heat_strain_index`, `max_heat_strain_index` and `time_in_heat_zone_1` to `_4` in seconds.
+
+A ride without a CORE gets none of these.
+
+CORE does not publish the formulas for the load and the score, so those are models fitted to the
+tables and worked examples on its help centre; they land within a few tenths of CORE's own
+numbers there. The
+score starts at 0 when BigNum is installed and only sees rides recorded on this Karoo, so it will
+differ from the CORE app's if you also heat train elsewhere.
 
 **Time - Riding** is the recording clock and stops when the ride does; **Time - Total** runs
 from the start of the ride and keeps counting through the stops, so it is the longer of the two

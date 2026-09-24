@@ -26,6 +26,9 @@ class SimpleField(
     // value which moves on its own shows it moving; see TimeField.
     override val demoInTestMode: Boolean = true,
     private val needsProfile: Boolean = false,
+    // A fixed colour scale for a field with no profile zones; see BaseNumericField.bandColor.
+    private val bands: ((Double) -> Int?)? = null,
 ) : BaseNumericField(extension, typeId, karoo) {
     override fun formatNeedsProfile() = needsProfile
+    override fun bandColor(raw: Double): Int? = bands?.invoke(raw)
 }

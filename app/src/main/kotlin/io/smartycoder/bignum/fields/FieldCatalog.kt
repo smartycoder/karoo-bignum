@@ -2,6 +2,9 @@ package io.smartycoder.bignum.fields
 
 import io.smartycoder.bignum.R
 import io.smartycoder.bignum.format.Formatters
+import io.smartycoder.bignum.heat.HeatAdaptation
+import io.smartycoder.bignum.heat.HeatStrain
+import io.smartycoder.bignum.heat.HeatTracker
 import io.smartycoder.bignum.render.ZoneKind
 import io.hammerhead.karooext.KarooSystemService
 import io.hammerhead.karooext.models.DataType
@@ -37,7 +40,19 @@ object FieldCatalog {
      */
     internal const val ETA_PREVIEW = 54_840.0
 
-    fun build(extension: String, karoo: KarooSystemService): List<BaseNumericField> {
+    /**
+     * The heat previews, which agree with each other the way the navigation ones do: a 38.6 °C
+     * core on 35.1 °C skin is a Heat Strain Index of 4.1, in heat zone 3 -- the one CORE trains
+     * in. Named so a test can hold the three to that.
+     */
+    internal const val CORE_PREVIEW = 38.6
+    internal const val SKIN_PREVIEW = 35.1
+    internal const val HSI_PREVIEW = 4.1
+
+    fun build(extension: String, karoo: KarooSystemService, heat: HeatTracker): List<BaseNumericField> {
+        // The core and skin fields each see only their own temperature, so their colour is read
+        // from the tracker, which has both. At most a sample behind the number it colours.
+        val heatZoneNow: (Double) -> Int? = { _ -> heat.state.value.hsi?.let(HeatStrain::color) }
         return listOf(
             // Speed
             SpeedField(extension, "speed", karoo, DataType.Type.SPEED, "SPEED", previewValue = 9.7),
@@ -148,6 +163,19 @@ object FieldCatalog {
             SimpleField(extension, "sunset", karoo, DataType.Type.SUNSET, "SUNSET", R.drawable.ic_clock, Formatters.clock, widthTemplate = "00:00", previewValue = SUNSET_PREVIEW),
             TemperatureField(extension, karoo),
             SimpleField(extension, "battery", karoo, DataType.Type.BATTERY_PERCENT, "BATTERY", R.drawable.ic_battery, Formatters.percent, previewValue = 64.0),
+
+            // Heat, from a CORE body temperature sensor. The two temperatures are the Karoo's own
+            // streams; they ship a data-quality flag beside the reading, so the field they read is
+            // named rather than left to singleValue. Both are coloured by the current Heat Zone,
+            // which CORE defines on the two together -- a core temperature alone cannot say it.
+            // The four after them are worked out here; see HeatTracker.
+            // The previews tell one story: see CORE_PREVIEW.
+            SimpleField(extension, "coreTemp", karoo, DataType.Type.CORE_TEMP, "CORE", R.drawable.ic_temp, Formatters.bodyTemperature, needsProfile = true, valueField = DataType.Field.CORE_TEMP, bands = heatZoneNow, previewValue = CORE_PREVIEW),
+            SimpleField(extension, "skinTemp", karoo, DataType.Type.SKIN_TEMP, "SKIN", R.drawable.ic_temp, Formatters.bodyTemperature, needsProfile = true, valueField = DataType.Field.SKIN_TEMP, bands = heatZoneNow, previewValue = SKIN_PREVIEW),
+            HeatField(extension, "heatStrain", karoo, heat, "HSI", Formatters.tenths, read = { it.hsi }, bands = HeatStrain::color, previewValue = HSI_PREVIEW),
+            HeatField(extension, "heatZone", karoo, heat, "HEAT Z", Formatters.count, read = { state -> state.hsi?.let { HeatStrain.zone(it).toDouble() } }, bands = { HeatStrain.colorOfZone(it.toInt()) }, previewValue = 3.0),
+            HeatField(extension, "heatLoad", karoo, heat, "HEAT LOAD", Formatters.tenths, read = { it.load }, previewValue = 6.1),
+            HeatField(extension, "heatAdaptation", karoo, heat, "HEAT ADAPT", Formatters.percent, read = { it.adaptation }, bands = HeatAdaptation::color, previewValue = 72.1),
         )
     }
 }
