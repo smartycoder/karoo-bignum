@@ -54,9 +54,11 @@ android {
             // rider's field layout and settings with it. Sharing the key keeps the debug build
             // a drop-in replacement in both directions.
             //
-            // Null when keystore.properties is absent, which falls back to the ordinary debug
-            // key rather than failing the build -- the same reasoning as release above.
-            signingConfig = signingConfigs.findByName("release")
+            // Without keystore.properties it falls back to the ordinary debug key rather than
+            // failing the build -- the same reasoning as release above. The fallback has to be
+            // spelled out: assigning the null findByName returns does not restore the default,
+            // it switches signing off, and an unsigned APK will not install at all.
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
         }
     }
 
